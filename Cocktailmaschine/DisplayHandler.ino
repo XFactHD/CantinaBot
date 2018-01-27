@@ -1,9 +1,9 @@
-const int LCD_RS = 52;
-const int LCD_EN = 51;
-const int LCD_D4 = A3;
-const int LCD_D5 = A4;
-const int LCD_D6 = A5;
-const int LCD_D7 = A6;
+const int LCD_RS = A10;
+const int LCD_EN = A11;
+const int LCD_D4 = A12;
+const int LCD_D5 = A13;
+const int LCD_D6 = A14;
+const int LCD_D7 = A15;
 
 const byte arrowRight[8] = {
   B10000,

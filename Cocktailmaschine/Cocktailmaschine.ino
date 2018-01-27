@@ -36,96 +36,35 @@ const int STATE_POST_PROCESS = 7;
 const int STATE_ERRORED = 8;
 const int STATE_READ_FILL_LEVEL = 9;
 
-//MISC
-const int STIR_TIME_MS = 6000;
+//TODO: fill in all recipes
+char recipeNames[8][9] {"Malaga", "RumCola", "GinTonic", "Malaga", "Zombie", "Jay-Dee", "Pacman", "Haven"}; //Names of the cocktails, max string length is 8 (extra space is for null character)!
+int recipeIngredientCounts[8] {0, 0, 0, 0, 0, 0, 0, 0}; //Number of ingredients of the cocktails
+int recipeIngredients[8][6] { //Ingredients of the cocktails
+  {-1, -1, -1, -1, -1, -1},
+  {-1, -1, -1, -1, -1, -1},
+  {-1, -1, -1, -1, -1, -1},
+  {-1, -1, -1, -1, -1, -1},
+  {-1, -1, -1, -1, -1, -1},
+  {-1, -1, -1, -1, -1, -1},
+  {-1, -1, -1, -1, -1, -1},
+  {-1, -1, -1, -1, -1, -1} };
+int recipeIngredientAmounts[8][6] { //Amount of each ingredient of a cocktail
+  {-1, -1, -1, -1, -1, -1},
+  {-1, -1, -1, -1, -1, -1},
+  {-1, -1, -1, -1, -1, -1},
+  {-1, -1, -1, -1, -1, -1},
+  {-1, -1, -1, -1, -1, -1},
+  {-1, -1, -1, -1, -1, -1},
+  {-1, -1, -1, -1, -1, -1},
+  {-1, -1, -1, -1, -1, -1} };
 
-char recipeNames[8][9]; //Names of the cocktails, has to be outside of the Recipe class to make writing to EEPROM easier, max string length is 8 (extra space is for null character)!
-
-class Recipe {
-private:
-  int index;
-  int count;
-  int ingredients[6] {-1, -1, -1, -1, -1, -1};
-  int amounts[6] {-1, -1, -1, -1, -1, -1};
-public:
-  Recipe(int index, char* name, int count) : index(index), count(count)
-  {
-    memcpy(recipeNames[index], name, strlen(name) * sizeof(char));
-  }
-
-  ~Recipe()
-  {
-    delete[] ingredients;
-    delete[] amounts;
-  }
-
-  char* getName()
-  {
-    return recipeNames[index];
-  }
-
-  int getCount()
-  {
-    return count;
-  }
-  
-  int* getIngredients()
-  {
-    return ingredients;
-  }
-
-  void setIngredient(int index, int ingredient)
-  {
-    ingredients[index] = ingredient;
-  }
-
-  int getIngredient(int index)
-  {
-    return ingredients[index];
-  }
-
-  void setAmountOf(int ingredient, int amount)
-  {
-    for(int i = 0; i < count; i++)
-    {
-      if(ingredients[i] == ingredient)
-      {
-        amounts[i] = amount;
-        break;
-      }
-    }
-  }
-
-  int getAmountOf(int ingredient)
-  {
-    for(int i = 0; i < count; i++)
-    {
-      if(ingredients[i] == ingredient)
-      {
-        return amounts[i];
-      }
-    }
-  }
-};
-
-char ingredientNames[6][6] { //max string length is 5 (extra space is for null character)!
+char ingredientNames[6][6] { //Names of the ingredients, max string length is 5 (extra space is for null character)!
   "Rum",
   "Cola",
   "Vodka",
   "Mango",
   "Gin",
   "Tonic"
-};
-
-Recipe recipes[8] {
-  { 0, "Malaga", 0 },
-  { 1, "RumCola", 0 },
-  { 2, "GinTonic", 0 },
-  { 3, "Malaga", 0 },
-  { 4, "Zombie", 0 },
-  { 5, "Jay-Dee", 0 },
-  { 6, "Pacman", 0 },
-  { 7, "Haven", 0 }
 };
 
 int fillLevels[6] { 0, 0, 0, 0, 0, 0 };
@@ -158,6 +97,7 @@ void setup() {
   pinMode(SWITCH_ARM_VERT_TOP, INPUT);
   pinMode(SWITCH_ARM_VERT_BOTTOM, INPUT);
   pinMode(13, INPUT);
+  initBaseRecipes();
   waitForSerialComm();
   if(state == STATE_SERIAL_COMM)
   {
@@ -166,6 +106,7 @@ void setup() {
   }
   attachInterrupt(digitalPinToInterrupt(BUTTON_INTERRUPT), buttonISR, RISING);
   attachInterrupt(digitalPinToInterrupt(SWITCH_INTERRUPT), switchISR, RISING);
+  //readFromEEPROM(); //TODO: reenable once finished
   moveArmToHome();
   rotateToPosZero();
   readAllFillLevels();
@@ -211,7 +152,7 @@ void checkStateChange() {
     }
     else if(state == STATE_WAITING_GLASS)
     {
-      if(checkIngredientsAvailable(recipes[selectedRecipe]))
+      if(checkIngredientsAvailable(selectedRecipe))
       {
         setTimestamp();
       }
@@ -243,7 +184,7 @@ void checkStateChange() {
     else if(state == STATE_POST_PROCESS)
     {
       printMessageMultiArg("Auswahl: ", recipeNames[selectedRecipe], "Fertig! Prost!", "");
-      readFillLevelsPostMixing(recipes[selectedRecipe]);
+      readFillLevelsPostMixing(selectedRecipe);
     }
     else if(state == STATE_READ_FILL_LEVEL)
     {
@@ -251,7 +192,6 @@ void checkStateChange() {
       readAllFillLevels();
       setState(STATE_MAIN_MENU);
     }
-    //TODO: do stuff needed for the new state
     stateChanged = false;
   }
 }

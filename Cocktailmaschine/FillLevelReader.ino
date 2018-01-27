@@ -10,6 +10,7 @@ void initFillLevelReader() {
   for(int i = 0; i < 6; i++)
   {
     pinMode(TRIGGER_PINS[i], OUTPUT);
+    digitalWrite(TRIGGER_PINS[i], LOW);
     pinMode(ECHO_PINS[i], INPUT);
   }
 }
@@ -23,10 +24,10 @@ void readAllFillLevels() {
 }
 
 //Only checks the fill level of ingredients used in the passed recipe
-void readFillLevelsPostMixing(Recipe r) {
-  for(int i = 0; i < r.getCount(); i++)
+void readFillLevelsPostMixing(int recipe) {
+  for(int i = 0; i < getNumberOfIngredients(recipe); i++)
   {
-    int ingredient = r.getIngredient(i);
+    int ingredient = getIngredient(recipe, i);
     fillLevels[ingredient] = measureFillLevel(TRIGGER_PINS[ingredient], ECHO_PINS[ingredient]);
   }
   

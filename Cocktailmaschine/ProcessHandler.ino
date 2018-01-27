@@ -21,28 +21,44 @@ const int VALVES[] { VALVE_INGREDIENT_1, VALVE_INGREDIENT_2, VALVE_INGREDIENT_3,
 const int POS_STIR_ARM = 7;
 const float ML_PER_MS_MIN = 0;
 const float ML_PER_MS_MAX = 0; 
+const int STIR_TIME_MS = 6000;
+const int STIR_SPEED = 200;
 
 volatile boolean homing = false;
+volatile boolean moving = false;
 volatile boolean home = false;
 volatile int steps = 0;
 
 void initProcessHandler() {
-  pinMode(VALVE_INGREDIENT_1, OUTPUT);
-  pinMode(VALVE_INGREDIENT_2, OUTPUT);
-  pinMode(VALVE_INGREDIENT_3, OUTPUT);
-  pinMode(VALVE_INGREDIENT_4, OUTPUT);
-  pinMode(VALVE_INGREDIENT_5, OUTPUT);
-  pinMode(VALVE_INGREDIENT_6, OUTPUT);
+  for(int i = 0; i < 6; i++)
+  {
+    pinMode(VALVES[i], OUTPUT);
+    digitalWrite(VALVES[i], LOW);
+  }
   pinMode(MOTOR_STIR, OUTPUT);
+  digitalWrite(MOTOR_STIR, LOW);
   stepperDisc.begin();
   stepperArmHor.begin();
   stepperArmVert.begin();
 }
 
-boolean checkIngredientsAvailable(Recipe r) {
-  for(int i = 0; i < r.getCount(); i++)
+void initBaseRecipes() { //TODO: remove after testing
+  for(int i = 0; i < 8; i++) {
+    setIngredient(i, 0, 0);
+    setAmountOfIngredient(i, 0, 25);
+    setIngredient(i, 1, 1);
+    setAmountOfIngredient(i, 1, 25);
+  }
+}
+
+boolean checkIngredientsAvailable(int recipe) {
+  for(int i = 0; i < 6; i++) { //TODO: remove after testing
+    fillLevels[i] = 50;
+  }
+  
+  for(int i = 0; i < getNumberOfIngredients(recipe); i++)
   {
-    if(fillLevels[r.getIngredient(i)] < 10)
+    if(fillLevels[getIngredient(recipe, i)] < 10)
     {
       return false;
     }
@@ -51,13 +67,11 @@ boolean checkIngredientsAvailable(Recipe r) {
 }
 
 void process() {
-  Recipe r = recipes[selectedRecipe];
-  
   int lastIngredient = -1;
-  for(int i = 0; i < r.getCount(); i++)
+  for(int i = 0; i < getNumberOfIngredients(selectedRecipe); i++)
   {
-    int ingredient = r.getIngredient(i);
-    int amount = r.getAmountOf(ingredient);
+    int ingredient = getIngredient(selectedRecipe, i);
+    int amount = getAmountOfIngredient(selectedRecipe, ingredient);
 
     int positionDelta = ingredient - lastIngredient;
     rotate(positionDelta);
@@ -91,11 +105,13 @@ void rotateToPosZero() {
 }
 
 void rotate(int positions) {
-  int dir = positions > 0 ? 1 : -1;
-  while(steps < abs(positions))
+  moving = true;
+  while(steps < positions)
   {
-    stepperDisc.move(dir);
+    stepperDisc.move(1);
   }
+  moving = false;
+  steps = 0;
 }
 
 void pourIngredient(int ingredient, int amount) {
@@ -159,9 +175,9 @@ void moveArmAndStir() {
   }
   delay(100);
 
-  digitalWrite(MOTOR_STIR, HIGH);
+  analogWrite(MOTOR_STIR, STIR_SPEED);
   delay(STIR_TIME_MS);
-  digitalWrite(MOTOR_STIR, LOW);
+  analogWrite(MOTOR_STIR, 0);
   delay(500);
   
   while(digitalRead(SWITCH_ARM_VERT_TOP) == LOW)
@@ -197,7 +213,7 @@ void switchISR() {
       home = true;
     }
   }
-  else
+  else if(moving)
   {
     if(digitalRead(SWITCH_DISC_POS_COUNT) == HIGH)
     {
