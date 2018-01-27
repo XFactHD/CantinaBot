@@ -34,4 +34,5 @@
 *.jar
 *.jnlp
 *.html
-CantinaControl/.idea/workspace.xml
+CantinaControl/.idea/*
+CantinaControl/CantinaControl.iml
