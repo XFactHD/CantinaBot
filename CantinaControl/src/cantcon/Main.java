@@ -7,7 +7,6 @@ import gnu.io.SerialPortEventListener;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.layout.GridPane;
@@ -18,7 +17,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.Enumeration;
 
 public class Main extends Application implements SerialPortEventListener
@@ -35,10 +33,18 @@ public class Main extends Application implements SerialPortEventListener
     private static final int TIME_OUT = 2000;
     private static final int DATA_RATE = 9600;
 
-    private boolean running = true;
-    private EnumConnStatus status = EnumConnStatus.DISCONNECTED;
+    private static final String MESSAGE_START_TRANSMISSION = "START";
+    private static final String MESSAGE_END_TRANSMISSION = "TERMINATE";
+    private static final String MESSAGE_ACKNOWLEDGE_TRANSMISSION = "ACK";
+    private static final String MESSAGE_DECLINE_TRANSMISSION = "NACK";
+    private static final String MESSAGE_ACCEPT_TRANSMISSION = "ACP";
+    private static final String MESSAGE_RECIPE_DATA_HEADER = "RECIPES;";
+    private static final String MESSAGE_INGREDIENT_DATA_HEADER = "INGREDIENTS;";
+    private static final String MESSAGE_DATA_END_MARKER = ";END";
 
-    private ArrayList<Node> elementsToDisable = new ArrayList<>();
+    private boolean running = true;
+    private boolean connected = false;
+    private EnumConnStatus status = EnumConnStatus.DISCONNECTED;
 
     private TimerThread timer = new TimerThread();
 
@@ -57,7 +63,7 @@ public class Main extends Application implements SerialPortEventListener
         this.primaryStage = primaryStage;
         GridPane root = new GridPane();
         primaryStage.setTitle("CantinaControl");
-        primaryStage.setScene(new Scene(root, 1400, 1050));
+        primaryStage.setScene(new Scene(root, 1800, 960));
         primaryStage.setResizable(false);
         primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>()
         {
@@ -70,12 +76,8 @@ public class Main extends Application implements SerialPortEventListener
 
         primaryStage.show();
 
-        elementsToDisable = DisplayManager.addScreenElements(primaryStage, root, elementsToDisable);
+        DisplayManager.addScreenElements(primaryStage, root);
 
-        for (Node n : elementsToDisable)
-        {
-            n.setDisable(true);
-        }
         timer.start();
     }
 
@@ -126,7 +128,10 @@ public class Main extends Application implements SerialPortEventListener
     {
         if (port != null)
         {
-            sendSerialMessage("TERMINATE");
+            if (connected)
+            {
+                sendSerialMessage("TERMINATE");
+            }
             port.removeEventListener();
             port.close();
         }
@@ -158,11 +163,12 @@ public class Main extends Application implements SerialPortEventListener
             initializeSerialPort(portName);
         }
 
-        if (sendSerialMessage("START"))
+        if (sendSerialMessage(MESSAGE_START_TRANSMISSION))
         {
             status = EnumConnStatus.CONNECTING;
             DisplayManager.setConnectionStatus(status);
             timer.activate();
+            connected = true;
         }
     }
 
@@ -170,7 +176,7 @@ public class Main extends Application implements SerialPortEventListener
     {
         status = EnumConnStatus.DISCONNECTING;
         DisplayManager.setConnectionStatus(status);
-        sendSerialMessage("TERMINATE");
+        sendSerialMessage(MESSAGE_END_TRANSMISSION);
     }
 
     @Override
@@ -189,45 +195,52 @@ public class Main extends Application implements SerialPortEventListener
                     {
                         if (status == EnumConnStatus.CONNECTING)
                         {
-                            if (inputLine.equals("ACK"))
+                            if (inputLine.equals(MESSAGE_ACKNOWLEDGE_TRANSMISSION))
                             {
                                 status = EnumConnStatus.CONNECTED;
                                 DisplayManager.setConnectionStatus(status);
 
-                                for(Node n : elementsToDisable)
-                                {
-                                    n.setDisable(false);
-                                }
                                 timer.deactivate();
-                                sleep(1000);
                             }
                         }
                         else if (status == EnumConnStatus.DISCONNECTING)
                         {
-                            if (inputLine.equals("ACK"))
+                            if (inputLine.equals(MESSAGE_ACKNOWLEDGE_TRANSMISSION))
                             {
                                 status = EnumConnStatus.DISCONNECTED;
                                 DisplayManager.setConnectionStatus(status);
+                                connected = false;
                             }
                         }
                         else if (status == EnumConnStatus.CONNECTED)
                         {
                             if (waitingForData)
                             {
-                                if (inputLine.startsWith("RECIPES;"))
+                                if (inputLine.startsWith(MESSAGE_RECIPE_DATA_HEADER) && inputLine.endsWith(MESSAGE_DATA_END_MARKER))
                                 {
                                     DisplayManager.receiveRecipes(inputLine);
+                                    waitingForData = false;
                                 }
-                                else if (inputLine.startsWith("INGREDIENTS;"))
+                                else if (inputLine.startsWith(MESSAGE_INGREDIENT_DATA_HEADER) && inputLine.endsWith(MESSAGE_DATA_END_MARKER))
                                 {
                                     DisplayManager.receiveIngredients(inputLine);
+                                    waitingForData = false;
                                 }
-                                waitingForData = false;
                             }
-                            else if (waitingForResponse && inputLine.equals("ACK"))
+                            else if (waitingForResponse && inputLine.equals(MESSAGE_ACCEPT_TRANSMISSION))
                             {
                                 DisplayManager.confirmSent();
                                 waitingForResponse = false;
+                            }
+                            else if (inputLine.equals(MESSAGE_DECLINE_TRANSMISSION))
+                            {
+                                Alert alert = new Alert(Alert.AlertType.ERROR);
+                                alert.setTitle("Error");
+                                alert.setHeaderText("Communication failed!");
+                                alert.setContentText("CantinaBot received an invalid message." +
+                                        "\nPlease restart this program and your CantinaBot." +
+                                        "\nIf this error occurs frequently, please consult an engineer from CantinaBot(R).");
+                                alert.showAndWait();
                             }
                         }
                     }
@@ -294,37 +307,37 @@ public class Main extends Application implements SerialPortEventListener
 
     private static class TimerThread extends Thread
     {
-        private long timestamp = 0;
+        private long timestamp = -1;
 
         @Override
         public void run()
         {
             while(Main.INSTANCE.running)
             {
-                if (timestamp != 0)
+                if (timestamp != -1)
                 {
                     if (Thread.interrupted())
                     {
-                        timestamp = 0;
+                        timestamp = -1;
                     }
-                    else if (System.currentTimeMillis() - timestamp > 1000) //FIXME: kills connection even if succesfull
+                    else if (System.currentTimeMillis() - timestamp > 1000)
                     {
-                        //Platform.runLater(new Runnable()
-                        //{
-                        //    @Override
-                        //    public void run()
-                        //    {
-                        //        Main.INSTANCE.status = EnumConnStatus.DISCONNECTED;
-                        //        DisplayManager.setConnectionStatus(Main.INSTANCE.status);
+                        Platform.runLater(new Runnable()
+                        {
+                            @Override
+                            public void run()
+                            {
+                                Main.INSTANCE.status = EnumConnStatus.DISCONNECTED;
+                                DisplayManager.setConnectionStatus(Main.INSTANCE.status);
 
-                        //        Alert alert = new Alert(Alert.AlertType.ERROR);
-                        //        alert.setTitle("Error");
-                        //        alert.setHeaderText("Connection Error");
-                        //        alert.setContentText("Couldn't connect to serial device (Timeout)!");
-                        //        alert.showAndWait();
-                        //    }
-                        //});
-                        timestamp = 0;
+                                Alert alert = new Alert(Alert.AlertType.ERROR);
+                                alert.setTitle("Error");
+                                alert.setHeaderText("Connection Error");
+                                alert.setContentText("Couldn't connect to serial device (Timeout)!");
+                                alert.showAndWait();
+                            }
+                        });
+                        timestamp = -1;
                     }
                 }
                 Main.sleep(5);
@@ -338,7 +351,7 @@ public class Main extends Application implements SerialPortEventListener
 
         public void deactivate()
         {
-            timestamp = 0;
+            timestamp = -1;
         }
     }
 }

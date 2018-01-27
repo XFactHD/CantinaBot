@@ -22,14 +22,13 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
+import javafx.geometry.Orientation;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
-import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Pair;
@@ -41,12 +40,11 @@ import java.util.Optional;
 public class DisplayManager
 {
     private static GridPane recipesPane;
-    private static GridPane ingredientPane;
+    private static GridPane ingredientsPane;
     private static Button selectButton;
     private static Button connectButton;
-    private static Label spaceLabel;
     private static Label stateLabel;
-    private static ArrayList<Pair<TextField, ArrayList<CheckBox>>> recipeList = new ArrayList<>();
+    private static ArrayList<Pair<TextField, ArrayList<Spinner<Integer>>>> recipeList = new ArrayList<>();
     private static Button loadRecipesButton;
     private static Button sendRecipesButton;
     private static ArrayList<TextField> ingredientList = new ArrayList<>();
@@ -130,15 +128,14 @@ public class DisplayManager
         return result.orElse(null);
     }
 
-    public static ArrayList<Node> addScreenElements(Stage primaryStage, GridPane root, ArrayList<Node> elementsToDisable) //TODO: add missing screen elements
+    public static void addScreenElements(Stage primaryStage, GridPane root)
     {
-        elementsToDisable = addMainElements(primaryStage, root, elementsToDisable);
-        elementsToDisable = addRecipeElements(elementsToDisable);
-        elementsToDisable = addIngredientElements(elementsToDisable);
-        return elementsToDisable;
+        addMainElements(primaryStage, root);
+        addIngredientElements();
+        addRecipeElements();
     }
 
-    private static ArrayList<Node> addMainElements(Stage primaryStage, GridPane root, ArrayList<Node> elementsToDisable)
+    private static void addMainElements(Stage primaryStage, GridPane root)
     {
         Line lineHorOne = new Line(0, 0, primaryStage.getWidth(), 0);
         lineHorOne.setStrokeWidth(2);
@@ -147,25 +144,25 @@ public class DisplayManager
         GridPane main = new GridPane();
         main.setMaxHeight(primaryStage.getHeight() - 86D);
 
-        Line lineVertOne = new Line(primaryStage.getWidth() / 2D, 0, primaryStage.getWidth() / 2D, primaryStage.getHeight() - 86D);
+        Line lineVertOne = new Line(primaryStage.getWidth() / 3D, 0, primaryStage.getWidth() / 3D, primaryStage.getHeight() - 86D);
         lineVertOne.setStrokeWidth(2);
         main.add(lineVertOne, 0, 0);
 
         GridPane ingredients = new GridPane();
-        ingredients.setMinWidth(primaryStage.getWidth() / 2D - 6D);
+        ingredients.setMinWidth(primaryStage.getWidth() / 3D - 6D);
         ingredients.setMinHeight(primaryStage.getHeight() - 86D);
         ingredients.setPadding(new Insets(10, 10, 10, 10));
         ingredients.setHgap(8);
         ingredients.setVgap(5);
         main.add(ingredients, 1, 0);
-        ingredientPane = ingredients;
+        ingredientsPane = ingredients;
 
-        Line lineVertTwo = new Line(primaryStage.getWidth() / 2D, 0, primaryStage.getWidth() / 2D, primaryStage.getHeight() - 86D);
+        Line lineVertTwo = new Line(primaryStage.getWidth() / 3D, 0, primaryStage.getWidth() / 3D, primaryStage.getHeight() - 86D);
         lineVertTwo.setStrokeWidth(2);
         main.add(lineVertTwo, 2, 0);
 
         GridPane recipes = new GridPane();
-        recipes.setMinWidth(primaryStage.getWidth() / 2D - 6D);
+        recipes.setMinWidth((primaryStage.getWidth() / 3D) * 2D - 6D);
         recipes.setMinHeight(primaryStage.getHeight() - 86D);
         recipes.setPadding(new Insets(10, 10, 10, 10));
         recipes.setHgap(8);
@@ -184,6 +181,7 @@ public class DisplayManager
         root.add(lineHorTwo, 0, 2);
 
         GridPane status = new GridPane();
+        status.setHgap(5);
         status.setMinWidth(primaryStage.getWidth());
         status.setPadding(new Insets(7));
         status.setMinHeight(80);
@@ -207,10 +205,7 @@ public class DisplayManager
         status.add(select, 0, 0);
         selectButton = select;
 
-        Label spaceOne = new Label("   ");
-        status.add(spaceOne, 1, 0);
-
-        Button connect = new Button("Connect");
+        Button connect = new Button("    Connect    ");
         connect.setOnAction(new EventHandler<ActionEvent>()
         {
             @Override
@@ -235,108 +230,55 @@ public class DisplayManager
             }
         });
         connect.setDisable(true);
-        status.add(connect, 2, 0);
+        status.add(connect, 1, 0);
         connectButton = connect;
 
-        Label space = new Label("        ");
-        status.add(space, 3, 0);
-        spaceLabel = space;
+        Label desc = new Label(" Status:");
+        status.add(desc, 2, 0);
 
-        Label desc = new Label("Status: ");
-        status.add(desc, 4, 0);
-
-        Label state = new Label("Disconnected");
+        Label state = new Label(EnumConnStatus.DISCONNECTED.getName());
         state.setTextFill(Color.web("#FF0000"));
-        status.add(state, 5, 0);
+        status.add(state, 3, 0);
         stateLabel = state;
 
         root.add(status, 0, 3);
-
-        return elementsToDisable;
+        state.setPrefWidth(111);
+        connect.setPrefWidth(118);
     }
 
-    private static ArrayList<Node> addRecipeElements(ArrayList<Node> elementsToDisable)
+    private static void addIngredientElements()
     {
-        for (int i = 0; i < 8; i++)
+        int yIndex = 0;
+        for (int i = 0; i < 6; i++)
         {
-            GridPane recipePane = new GridPane();
-            recipePane.setVgap(5);
+            GridPane ingredientPane = new GridPane();
+            ingredientPane.setVgap(5);
+            ingredientPane.setHgap(10);
 
-            Label desc = new Label("Recipe #" + (i + 1));
-            recipePane.add(desc, 0, 0);
+            Label description = new Label("Ingredient #" + Integer.toString(i + 1));
+            ingredientPane.add(description, 0, 0);
 
-            GridPane namePane = new GridPane();
-            Label name = new Label("Name:   ");
-            name.setTextAlignment(TextAlignment.RIGHT);
-            recipePane.add(name, 0, 1);
-            LimitedTextField nameField = new LimitedTextField(8);
-            namePane.add(nameField, 0, 0);
-            recipePane.add(namePane, 1, 1);
+            Label name = new Label("Name: ");
+            ingredientPane.add(name, 0, 1);
 
-            GridPane checkBoxPane = new GridPane();
-            Label ingredientLabel = new Label("Ingredients:   ");
-            recipePane.add(ingredientLabel, 0, 2);
-            ArrayList<CheckBox> boxes = new ArrayList<>();
-            for (int j = 0; j < 6; j++)
-            {
-                CheckBox box = new CheckBox();
-                box.setText(Integer.toString(j + 1) + "    ");
-                boxes.add(box);
-                checkBoxPane.add(box, j + 1, 0);
-            }
-            recipePane.add(checkBoxPane, 1, 2);
+            LimitedTextField nameField = new LimitedTextField(5);
+            ingredientPane.add(nameField, 1, 1);
+            ingredientList.add(nameField);
 
-            Label space = new Label("   ");
-            recipePane.add(space, 0, 3);
+            ingredientsPane.add(ingredientPane, 0, yIndex);
+            yIndex++;
 
-            recipesPane.add(recipePane, 0, i);
-
-            recipeList.add(new Pair<>(nameField, boxes));
+            Separator separatorOne = new Separator(Orientation.HORIZONTAL);
+            ingredientsPane.add(separatorOne, 0, yIndex);
+            yIndex++;
         }
 
-        recipesPane.add(new Label("  "), 0, 8);
-        recipesPane.add(new Label("  "), 0, 9);
+        GridPane buttonPane = new GridPane();
+        buttonPane.setHgap(10);
 
-        GridPane buttons = new GridPane();
-        buttons.setHgap(10);
-        Button load = new Button("Load recipes");
-        load.setDisable(true);
-        load.setOnAction(new EventHandler<ActionEvent>()
-        {
-            @Override
-            public void handle(ActionEvent event)
-            {
-                loadRecipes();
-            }
-        });
-        buttons.add(load, 0, 0);
-        loadRecipesButton = load;
-        Button send = new Button("Send recipes");
-        send.setDisable(true);
-        send.setOnAction(new EventHandler<ActionEvent>()
-        {
-            @Override
-            public void handle(ActionEvent event)
-            {
-                sendRecipes();
-            }
-        });
-        buttons.add(send, 1, 0);
-        sendRecipesButton = send;
-        recipesPane.add(buttons, 0, 10);
-
-        return elementsToDisable;
-    }
-
-    private static ArrayList<Node> addIngredientElements(ArrayList<Node> elementsToDisable)
-    {
-        //TODO: add missing elements
-
-        GridPane buttons = new GridPane();
-        buttons.setHgap(10);
-        Button load = new Button("Load ingredients");
-        load.setDisable(true);
-        load.setOnAction(new EventHandler<ActionEvent>()
+        Button loadIngredients = new Button("Load ingredients");
+        loadIngredients.setDisable(true);
+        loadIngredients.setOnAction(new EventHandler<ActionEvent>()
         {
             @Override
             public void handle(ActionEvent event)
@@ -344,11 +286,11 @@ public class DisplayManager
                 loadIngredients();
             }
         });
-        buttons.add(load, 0, 0);
-        loadIngredientsButton = load;
-        Button send = new Button("Send ingredients");
-        send.setDisable(true);
-        send.setOnAction(new EventHandler<ActionEvent>()
+        buttonPane.add(loadIngredients, 0, 0);
+        loadIngredientsButton = loadIngredients;
+        Button sendIngredients = new Button("Send ingredients");
+        sendIngredients.setDisable(true);
+        sendIngredients.setOnAction(new EventHandler<ActionEvent>()
         {
             @Override
             public void handle(ActionEvent event)
@@ -356,10 +298,93 @@ public class DisplayManager
                 sendIngredients();
             }
         });
-        buttons.add(send, 1, 0);
-        sendIngredientsButton = send;
-        ingredientPane.add(buttons, 0, 10);
-        return elementsToDisable;
+        buttonPane.add(sendIngredients, 1, 0);
+        sendIngredientsButton = sendIngredients;
+
+        ingredientsPane.add(buttonPane, 0, yIndex);
+    }
+
+    private static void addRecipeElements()
+    {
+        for (int i = 0; i < 8; i++)
+        {
+            GridPane recipePane = new GridPane();
+            recipePane.setVgap(5);
+
+            Label description = new Label("Recipe #" + Integer.toString(i + 1));
+            recipePane.add(description, 0, 0);
+
+            GridPane namePane = new GridPane();
+            Label name = new Label("Name:   ");
+            recipePane.add(name, 0, 1);
+            LimitedTextField nameField = new LimitedTextField(8);
+            namePane.add(nameField, 0, 1);
+            recipePane.add(namePane, 1, 1);
+
+            Label ingredientLabel = new Label("Ingredients:   ");
+            recipePane.add(ingredientLabel, 0, 2);
+            GridPane spinnerPane = new GridPane();
+            spinnerPane.setHgap(7);
+            ArrayList<Spinner<Integer>> spinners = new ArrayList<>();
+            int xCoord = 0;
+            for (int j = 0; j < 6; j++)
+            {
+                Label ingredientIndex = new Label(Integer.toString(j + 1) + ": ");
+                spinnerPane.add(ingredientIndex, xCoord, 0);
+                xCoord++;
+                Spinner<Integer> amount = new Spinner<>(0, 200, 0);
+                amount.setMaxWidth(100);
+                spinners.add(amount);
+                spinnerPane.add(amount, xCoord, 0);
+                xCoord++;
+                if (j < 5)
+                {
+                    Separator separator = new Separator(Orientation.VERTICAL);
+                    spinnerPane.add(separator, xCoord, 0);
+                    xCoord++;
+                }
+            }
+            recipePane.add(spinnerPane, 1, 2);
+
+            Separator separatorOne = new Separator(Orientation.HORIZONTAL);
+            recipePane.add(separatorOne, 0, 3);
+            Separator separatorTwo = new Separator(Orientation.HORIZONTAL);
+            recipePane.add(separatorTwo, 1, 3);
+
+            recipesPane.add(recipePane, 0, i);
+
+            recipeList.add(new Pair<>(nameField, spinners));
+        }
+
+        GridPane buttonPane = new GridPane();
+        buttonPane.setHgap(10);
+
+        Button loadRecipes = new Button("Load recipes");
+        loadRecipes.setDisable(true);
+        loadRecipes.setOnAction(new EventHandler<ActionEvent>()
+        {
+            @Override
+            public void handle(ActionEvent event)
+            {
+                loadRecipes();
+            }
+        });
+        buttonPane.add(loadRecipes, 0, 0);
+        loadRecipesButton = loadRecipes;
+        Button sendRecipes = new Button("Send recipes");
+        sendRecipes.setDisable(true);
+        sendRecipes.setOnAction(new EventHandler<ActionEvent>()
+        {
+            @Override
+            public void handle(ActionEvent event)
+            {
+                sendRecipes();
+            }
+        });
+        buttonPane.add(sendRecipes, 1, 0);
+        sendRecipesButton = sendRecipes;
+
+        recipesPane.add(buttonPane, 0, 8);
     }
 
     public static void setConnectionStatus(EnumConnStatus status)
@@ -383,8 +408,7 @@ public class DisplayManager
 
         if (status == EnumConnStatus.CONNECTED)
         {
-            connectButton.setText("Disconnect");
-            spaceLabel.setText("     ");
+            connectButton.setText("  Disconnect   ");
             loadRecipesButton.setDisable(false);
             sendRecipesButton.setDisable(false);
             loadIngredientsButton.setDisable(false);
@@ -392,8 +416,7 @@ public class DisplayManager
         }
         else if (status == EnumConnStatus.DISCONNECTED)
         {
-            connectButton.setText("Connect");
-            spaceLabel.setText("        ");
+            connectButton.setText("    Connect    ");
             selectButton.setDisable(false);
         }
         stateLabel.setText(status.getName());
@@ -418,7 +441,21 @@ public class DisplayManager
     public static void receiveRecipes(String input)
     {
         input = input.replace("RECIPES;", "");
-        //TODO: process data
+        input = input.replace(";END", "");
+        String[] recipes = input.split(";");
+        for (int i = 0; i < recipes.length && i < 8; i++)
+        {
+            Pair<TextField, ArrayList<Spinner<Integer>>> recipeFields = recipeList.get(i);
+            String[] data = recipes[i].split("\\|");
+            recipeFields.getKey().setText(data[0]);
+            ArrayList<Spinner<Integer>> ingredientFields = recipeFields.getValue();
+            for (int j = 2; j < data.length && j < 8; j++)
+            {
+                String[] details = data[j].split(",");
+                int index = Integer.valueOf(details[0]);
+                ingredientFields.get(index).getValueFactory().setValue(Integer.valueOf(details[1]));
+            }
+        }
         loadRecipesButton.setDisable(false);
         sendRecipesButton.setDisable(false);
         loadIngredientsButton.setDisable(false);
@@ -427,11 +464,68 @@ public class DisplayManager
 
     private static void sendRecipes()
     {
+        int[] ingredientCounts = new int[] {0, 0, 0, 0, 0, 0, 0, 0};
+        for (int i = 0; i < 8; i++)
+        {
+            Pair<TextField, ArrayList<Spinner<Integer>>> recipe = recipeList.get(i);
+            if (recipe.getKey().getText().equals(""))
+            {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText("Can't send recipes!");
+                alert.setContentText("Can't send recipe with empty name to CantinaBot!");
+                alert.showAndWait();
+                return;
+            }
+
+            ArrayList<Spinner<Integer>> ingredients = recipe.getValue();
+            for (int j = 0; j < 6; j++)
+            {
+                if (ingredients.get(j).getValue() != 0)
+                {
+                    ingredientCounts[i]++;// = ingredientCounts[i] + 1;
+                }
+            }
+
+            if (ingredientCounts[i] == 0)
+            {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText("Can't send recipes!");
+                alert.setContentText("Can't send recipe with no ingredients to CantinaBot!");
+                alert.showAndWait();
+                return;
+            }
+        }
+
         loadRecipesButton.setDisable(true);
         sendRecipesButton.setDisable(true);
         loadIngredientsButton.setDisable(true);
         sendIngredientsButton.setDisable(true);
-        //TODO: send data
+
+        StringBuilder builder = new StringBuilder("RECIPES;");
+        for (int i = 0; i < 8; i++)
+        {
+            Pair<TextField, ArrayList<Spinner<Integer>>> recipe = recipeList.get(i);
+            builder.append(recipe.getKey().getText());
+            builder.append("|");
+            builder.append(ingredientCounts[i]);
+            ArrayList<Spinner<Integer>> ingredients = recipe.getValue();
+            for (int j = 0; j < 6; j++)
+            {
+                if (ingredients.get(j).getValue() != 0)
+                {
+                    builder.append("|");
+                    builder.append(j);
+                    builder.append(",");
+                    builder.append(ingredients.get(j).getValue());
+                }
+            }
+            builder.append(";");
+        }
+        builder.append("END");
+        Main.INSTANCE.sendSerialMessage(builder.toString());
+
         Main.INSTANCE.setWaitingForResponse();
     }
 
@@ -448,7 +542,12 @@ public class DisplayManager
     public static void receiveIngredients(String input)
     {
         input = input.replace("INGREDIENTS;", "");
-        //TODO: process data
+        input = input.replace(";END", "");
+        String[] names = input.split(";");
+        for (int i = 0; i < names.length && i < 6; i++)
+        {
+            ingredientList.get(i).setText(names[i]);
+        }
         loadRecipesButton.setDisable(false);
         sendRecipesButton.setDisable(false);
         loadIngredientsButton.setDisable(false);
@@ -457,11 +556,33 @@ public class DisplayManager
 
     private static void sendIngredients()
     {
+        for (TextField field : ingredientList)
+        {
+            if (field.getText().equals(""))
+            {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error");
+                alert.setHeaderText("Can't send ingredients!");
+                alert.setContentText("Can't send empty ingredient name to CantinaBot!");
+                alert.showAndWait();
+                return;
+            }
+        }
+
         loadRecipesButton.setDisable(true);
         sendRecipesButton.setDisable(true);
         loadIngredientsButton.setDisable(true);
         sendIngredientsButton.setDisable(true);
-        //TODO: send data
+
+        StringBuilder builder = new StringBuilder("INGREDIENTS;");
+        for (int i = 0; i < 6; i++)
+        {
+            builder.append(ingredientList.get(i).getText());
+            builder.append(";");
+        }
+        builder.append("END");
+        Main.INSTANCE.sendSerialMessage(builder.toString());
+
         Main.INSTANCE.setWaitingForResponse();
     }
 

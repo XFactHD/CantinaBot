@@ -17,9 +17,9 @@ package cantcon;
 
 public enum EnumConnStatus
 {
-    DISCONNECTED("Disconnected", "#FF0000"),
-    CONNECTING("Connecting...", "#FF8800"),
-    CONNECTED("Connected", "#00FF00"),
+    DISCONNECTED ("Disconnected    ", "#FF0000"),
+    CONNECTING   ("Connecting...   ", "#FF8800"),
+    CONNECTED    ("Connected       ", "#00FF00"),
     DISCONNECTING("Disconnecting...", "#FF8800");
 
     private String name;
