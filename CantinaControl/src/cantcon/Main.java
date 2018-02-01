@@ -13,10 +13,11 @@ import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Enumeration;
 
 public class Main extends Application implements SerialPortEventListener
@@ -53,6 +54,7 @@ public class Main extends Application implements SerialPortEventListener
 
     public static void main(String[] args)
     {
+        extractDLLs();
         launch(args);
     }
 
@@ -292,16 +294,22 @@ public class Main extends Application implements SerialPortEventListener
         this.waitingForResponse = true;
     }
 
-    private static void sleep(int millis)
+    private static void extractDLLs()
     {
+        copyFile(Main.class.getResourceAsStream("/rxtxParallel.dll"), FileSystems.getDefault().getPath("rxtxParallel.dll").toString());
+        copyFile(Main.class.getResourceAsStream("/rxtxSerial.dll"), FileSystems.getDefault().getPath("rxtxSerial.dll").toString());
+    }
+
+    public static void copyFile(InputStream source, String destination)
+    {
+        if (source == null) { return; } //Either we are in a dev environment or the desired files are not in the jar
         try
         {
-            Thread.sleep(millis);
+            Files.copy(source, Paths.get(destination), StandardCopyOption.REPLACE_EXISTING);
         }
-        catch (InterruptedException e)
+        catch (IOException ex)
         {
-            System.err.println("Interrupted while sleeping!");
-            e.printStackTrace();
+            //ignored, will crash moments later anyway
         }
     }
 
@@ -340,7 +348,7 @@ public class Main extends Application implements SerialPortEventListener
                         timestamp = -1;
                     }
                 }
-                Main.sleep(5);
+                delay();
             }
         }
 
@@ -352,6 +360,19 @@ public class Main extends Application implements SerialPortEventListener
         public void deactivate()
         {
             timestamp = -1;
+        }
+
+        private void delay()
+        {
+            try
+            {
+                Thread.sleep(5);
+            }
+            catch (InterruptedException e)
+            {
+                System.err.println("Interrupted while sleeping!");
+                e.printStackTrace();
+            }
         }
     }
 }
