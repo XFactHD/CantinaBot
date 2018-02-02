@@ -1,5 +1,6 @@
 const int GLASS_SENSOR = 13;
 
+//Called when a recipe was selected by the user, waits 10 seconds for the user to put a glass on the turntable
 void waitForGlass() {
   printMessageMultiArg("Auswahl: ", recipeNames[selectedRecipe], "Warte auf Glass!", "");
   boolean success = true;
@@ -26,6 +27,7 @@ void waitForGlass() {
   }
 }
 
+//Called when the start button was pressed, checks if the user left the glass on the turntable
 boolean checkGlassStillThere() {
   boolean stillThere = false;
   setTimestamp();

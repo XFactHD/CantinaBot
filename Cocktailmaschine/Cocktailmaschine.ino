@@ -37,34 +37,34 @@ const int STATE_ERRORED = 8;
 const int STATE_READ_FILL_LEVEL = 9;
 
 //TODO: fill in all recipes
-char recipeNames[8][9] {"Malaga", "RumCola", "GinTonic", "Malaga", "Zombie", "Jay-Dee", "Pacman", "Haven"}; //Names of the cocktails, max string length is 8 (extra space is for null character)!
-int recipeIngredientCounts[8] {0, 0, 0, 0, 0, 0, 0, 0}; //Number of ingredients of the cocktails
+char recipeNames[8][9] {"RumCola", "ColaWodk", "ColaWhis", "Daiquiri", "WhiskySo", "WodkaSou", "WhiskyD", "WodkaD"}; //Names of the cocktails, max string length is 8 (extra space is for null character)!
+int recipeIngredientCounts[8] {2, 2, 2, 3, 3, 3, 1, 1}; //Number of ingredients of the cocktails
 int recipeIngredients[8][6] { //Ingredients of the cocktails
-  {-1, -1, -1, -1, -1, -1},
-  {-1, -1, -1, -1, -1, -1},
-  {-1, -1, -1, -1, -1, -1},
-  {-1, -1, -1, -1, -1, -1},
-  {-1, -1, -1, -1, -1, -1},
-  {-1, -1, -1, -1, -1, -1},
-  {-1, -1, -1, -1, -1, -1},
-  {-1, -1, -1, -1, -1, -1} };
+  {0,  1, -1, -1, -1, -1},
+  {2,  1, -1, -1, -1, -1},
+  {3,  1, -1, -1, -1, -1},
+  {0,  4,  5, -1, -1, -1},
+  {3,  4,  5, -1, -1, -1},
+  {2,  4,  5, -1, -1, -1},
+  {3, -1, -1, -1, -1, -1},
+  {2, -1, -1, -1, -1, -1} };
 int recipeIngredientAmounts[8][6] { //Amount of each ingredient of a cocktail
-  {-1, -1, -1, -1, -1, -1},
-  {-1, -1, -1, -1, -1, -1},
-  {-1, -1, -1, -1, -1, -1},
-  {-1, -1, -1, -1, -1, -1},
-  {-1, -1, -1, -1, -1, -1},
-  {-1, -1, -1, -1, -1, -1},
-  {-1, -1, -1, -1, -1, -1},
-  {-1, -1, -1, -1, -1, -1} };
+  {50, 180, -1, -1, -1, -1},
+  {50, 180, -1, -1, -1, -1},
+  {50, 180, -1, -1, -1, -1},
+  {50,  25, 25, -1, -1, -1},
+  {50,  25, 25, -1, -1, -1},
+  {50,  25, 25, -1, -1, -1},
+  {50,  -1, -1, -1, -1, -1},
+  {50,  -1, -1, -1, -1, -1} };
 
 char ingredientNames[6][6] { //Names of the ingredients, max string length is 5 (extra space is for null character)!
   "Rum",
   "Cola",
   "Vodka",
-  "Mango",
-  "Gin",
-  "Tonic"
+  "Whisk",
+  "Lime",
+  "Sirup"
 };
 
 int fillLevels[6] { 0, 0, 0, 0, 0, 0 };
@@ -81,6 +81,7 @@ void setup() {
   printMessage("INITIALIZATION", "PLEASE WAIT");
   initFillLevelReader();
   initProcessHandler();
+  //Configure pins
   pinMode(BUTTON_START_OR_FILL_INFO, INPUT);
   pinMode(BUTTON_SELECT_1, INPUT);
   pinMode(BUTTON_SELECT_2, INPUT);
@@ -97,13 +98,13 @@ void setup() {
   pinMode(SWITCH_ARM_VERT_TOP, INPUT);
   pinMode(SWITCH_ARM_VERT_BOTTOM, INPUT);
   pinMode(13, INPUT);
-  initBaseRecipes();
   waitForSerialComm();
   if(state == STATE_SERIAL_COMM)
   {
     printMessage("SERIAL ACTIVE", "WAITING FOR START");
     return;
   }
+  //Attach interrupts for user input buttons and limit switches
   attachInterrupt(digitalPinToInterrupt(BUTTON_INTERRUPT), buttonISR, RISING);
   attachInterrupt(digitalPinToInterrupt(SWITCH_INTERRUPT), switchISR, RISING);
   //readFromEEPROM(); //TODO: reenable once finished
@@ -131,12 +132,14 @@ void loop() {
   }
 }
 
+//Sets the state of the state machine and marks it for checking in the loop method
 void setState(int newState) {
   lastState = state;
   state = newState;
   stateChanged = true;
 }
 
+//Called from loop(), checks if the state of the state machine changed and takes actions according to the new state
 void checkStateChange() {
   if(stateChanged)
   {
@@ -196,6 +199,7 @@ void checkStateChange() {
   }
 }
 
+//Called when a button press by the user triggers the hardware interrupt
 void buttonISR() {
   if(state == STATE_FILL_INFO)
   {
@@ -261,10 +265,12 @@ void buttonISR() {
   }
 }
 
+//Sets a timestamp for a timeout
 void setTimestamp() {
   timestamp = millis();
 }
 
+//Checks if the timeout has been reached
 boolean timeOver(unsigned long timeout) {
   unsigned long current = millis();
   if(current < timestamp || current - timestamp >= timeout)
@@ -275,6 +281,7 @@ boolean timeOver(unsigned long timeout) {
   return false;
 }
 
+//Maps a float value from one range into another (map() only uses integer maths which causes extreme loss of precision)
 float mapFloat(float x, float in_min, float in_max, float out_min, float out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }

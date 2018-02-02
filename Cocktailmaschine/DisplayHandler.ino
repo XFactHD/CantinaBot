@@ -1,3 +1,4 @@
+//LCD pins
 const int LCD_RS = A10;
 const int LCD_EN = A11;
 const int LCD_D4 = A12;
@@ -5,6 +6,7 @@ const int LCD_D5 = A13;
 const int LCD_D6 = A14;
 const int LCD_D7 = A15;
 
+//Pixel definitions for custom characters
 const byte arrowRight[8] = {
   B10000,
   B11000,
@@ -67,6 +69,7 @@ const byte ae[8] = {
 
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
+//Initializes the display, clears it and creates the custom characters
 void initDisplay() {
   lcd.begin(20, 4);
   lcd.clear();
@@ -78,6 +81,7 @@ void initDisplay() {
   lcd.createChar(5, ae);
 }
 
+//Prints all recipes to the display
 void showRecipes() {
   lcd.clear();
   
@@ -126,6 +130,7 @@ void showRecipes() {
   lcd.write(byte(1));
 }
 
+//Prints the fill levels of the ingredient bottles to the display
 void showFillLevels() {
   lcd.setCursor(0, 0);
   printCString(" Fuellstandsanzeige: ", false);
@@ -218,6 +223,7 @@ void showFillLevels() {
   lcd.print("%");
 }
 
+//Prints an error message to the display
 void printError(int code) {
   char* lineOne = "INTERNAL ERROR";
   char* line = code < 10 ? "CODE: 0x0" : "CODE: 0x";
@@ -225,6 +231,7 @@ void printError(int code) {
   printMessage(lineOne, lineTwo.c_str());
 }
 
+//Prints the two lines of text passed to it to the display
 void printMessage(const char* lineOne, const char* lineTwo) {
   if(strlen(lineOne) > 18 || strlen(lineTwo) > 18)
   {
@@ -270,6 +277,7 @@ void printMessage(const char* lineOne, const char* lineTwo) {
   lcd.print("+------------------+");
 }
 
+//Same as above, "concatenates" the two parameters passed to it
 void printMessageMultiArg(const char* lineOneOne, const char* lineOneTwo, const char* lineTwoOne, const char* lineTwoTwo) {
   if(strlen(lineOneOne) + strlen(lineOneTwo) > 18 || strlen(lineTwoOne) + strlen(lineTwoTwo) > 18)
   {
@@ -315,6 +323,7 @@ void printMessageMultiArg(const char* lineOneOne, const char* lineOneTwo, const 
   lcd.print("+------------------+");
 }
 
+//Prints the string passed to it to the display, centers the string if 'centered' is true, replaces certain character combinations with custom chars (ae --> ä; oe --> ö; ue --> ü)
 void printCString(const char* s, boolean centered) {
   int i = 0;
   int skips = 0;
@@ -380,6 +389,7 @@ void printCString(const char* s, boolean centered) {
   }
 }
 
+//Same as above, "concatenates" the two parameters passed to it
 void printCStringMulti(const char* s1, const char* s2, boolean centered) {
   int i = 0;
   int skips = 0;
@@ -489,6 +499,7 @@ void printCStringMulti(const char* s1, const char* s2, boolean centered) {
   }
 }
 
+//Calculates the amount of spaces between two recipes in one line in the main menu
 int getRecipeSpaces(const char* r1, const char* r2) {
   return 18 - (strlen(r1) + strlen(r2));
 }

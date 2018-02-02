@@ -1,3 +1,4 @@
+//Valve, stir motor and stepper driver pins
 const int VALVE_INGREDIENT_1 = 0;
 const int VALVE_INGREDIENT_2 = 0;
 const int VALVE_INGREDIENT_3 = 0;
@@ -21,17 +22,18 @@ A4988 stepperArmVert(200, STEPPER_ARM_VERT_DIR, STEPPER_ARM_VERT_STEP, STEPPER_A
 
 const int VALVES[] { VALVE_INGREDIENT_1, VALVE_INGREDIENT_2, VALVE_INGREDIENT_3, VALVE_INGREDIENT_4, VALVE_INGREDIENT_5, VALVE_INGREDIENT_6 };
 
-const int POS_STIR_ARM = 7;
-const float ML_PER_MS_MIN = 1;
-const float ML_PER_MS_MAX = 1; 
-const int STIR_TIME_MS = 6000;
-const int STIR_SPEED = 200;
+const int POS_STIR_ARM = 7; //Position of the stir arm above the table (pos 0 = start, pos 1-6 = ingredients, pos 7 = stir arm)
+const float ML_PER_MS_MIN = 1; //Flow speed in milliliters per millisecond when the bottle is almost empty
+const float ML_PER_MS_MAX = 1; //Flow speed in milliliters per millisecond when the bottle is full
+const int STIR_TIME_MS = 6000; //Time to stir the cocktail
+const int STIR_SPEED = 200; //PWM duty cycle for the stir motor
 
 volatile boolean homing = false;
 volatile boolean moving = false;
 volatile boolean home = false;
 volatile int steps = 0;
 
+//Configures all pins, initializes the stepper drivers and disables them to conserve energy
 void initProcessHandler() {
   for(int i = 0; i < 6; i++)
   {
@@ -48,15 +50,7 @@ void initProcessHandler() {
   stepperArmVert.disable();
 }
 
-void initBaseRecipes() { //TODO: remove after testing
-  for(int i = 0; i < 8; i++) {
-    setIngredient(i, 0, 0);
-    setAmountOfIngredient(i, 0, 25);
-    setIngredient(i, 1, 1);
-    setAmountOfIngredient(i, 1, 25);
-  }
-}
-
+//Checks if all ingredients for the recipe selected by the user are available in sufficient amounts
 boolean checkIngredientsAvailable(int recipe) {
   for(int i = 0; i < 6; i++) { //TODO: remove after testing
     fillLevels[i] = 50;
@@ -72,6 +66,7 @@ boolean checkIngredientsAvailable(int recipe) {
   return true;
 }
 
+//Handles the production of the selected cocktail
 void process() {
   int lastIngredient = -1;
   for(int i = 0; i < getNumberOfIngredients(selectedRecipe); i++)
@@ -94,6 +89,7 @@ void process() {
   setState(STATE_POST_PROCESS);
 }
 
+//Homes the turntable (glass holder at the start position)
 void rotateToPosZero() {
   if(digitalRead(SWITCH_DISC_POS_ZERO) == HIGH)
   {
@@ -112,6 +108,7 @@ void rotateToPosZero() {
   delay(100);
 }
 
+//Rotates the turntable by the amount of stations passed in
 void rotate(int positions) { //TODO: rewrite to use a predefined amount of stepper steps
   moving = true;
   stepperDisc.enable(); //Switch stepper driver on
@@ -124,6 +121,7 @@ void rotate(int positions) { //TODO: rewrite to use a predefined amount of stepp
   steps = 0;
 }
 
+//Pours the ingredient at the defined amount into the glass
 void pourIngredient(int ingredient, int amount) {
   digitalWrite(VALVES[ingredient], HIGH);
   float mlPerMs = mapFloat(fillLevels[ingredient], 10, 100, ML_PER_MS_MIN, ML_PER_MS_MAX);
@@ -133,6 +131,7 @@ void pourIngredient(int ingredient, int amount) {
   delay(500);
 }
 
+//Homes the stir arm (outside the radius of the turntable, spoon in the washing container)
 void moveArmToHome() {
   if(digitalRead(SWITCH_ARM_HOR_OUT) == LOW)
   {
@@ -177,6 +176,7 @@ void moveArmToHome() {
   delay(100);
 }
 
+//Moves the arm into the glass, stirs the cocktail and moves the arm back to the washing container
 void moveArmAndStir() {
   stepperArmVert.enable(); //Switch stepper driver on
   while(digitalRead(SWITCH_ARM_VERT_TOP) == LOW)
@@ -248,6 +248,7 @@ void moveArmAndStir() {
   digitalWrite(MOTOR_STIR, LOW);
 }
 
+//Called when a limit switch triggers the hardware interrupt
 void switchISR() {
   if(homing)
   {

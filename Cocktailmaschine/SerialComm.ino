@@ -3,6 +3,7 @@ String output = "";
 boolean serialRunning = false;
 boolean needsReboot = false;
 
+//Waits for 2 seconds for a computer to attempt a connection with this device
 void waitForSerialComm() {
   setTimestamp();
   while(!timeOver(2000) && Serial.available() == 0) { ; }
@@ -15,6 +16,7 @@ void waitForSerialComm() {
   }
 }
 
+//Processes the message received from the serial port
 void receiveMessage() {
   delay(100);
   Serial.println(message);
@@ -127,8 +129,6 @@ void receiveMessage() {
         index++;
       }
 
-      Serial.println("Seperated recipes");
-
       int size = index;
       for(int i = 0; i < size; i++)
       {
@@ -141,11 +141,9 @@ void receiveMessage() {
           index++;
         }
 
-        Serial.print("Split recipe #");
-        Serial.println(i);
-
         setName(i, recipeParts[0]);
         int ingredientCount = atoi(recipeParts[1]);
+        //recipeIngredientCounts[i] = ingredientCount; //TODO: check if this is necessary
         for(int j = 0; j < ingredientCount; j++)
         {
           int stringIndex = j + 2;
@@ -167,6 +165,7 @@ void receiveMessage() {
   }
 }
 
+//Called by a software routine when a byte is received on the serial bus, assembles the bytes into a string and calls receiveMessage() when the string is complete
 void serialEvent() {
   if(state != STATE_SERIAL_COMM || needsReboot) { return; }
 
