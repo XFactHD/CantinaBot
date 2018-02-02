@@ -5,21 +5,21 @@
 //PINS
 const int BUTTON_INTERRUPT = 2;
 const int SWITCH_INTERRUPT = 3;
-const int BUTTON_START_OR_FILL_INFO = A0;
-const int BUTTON_SELECT_1 = A2;
-const int BUTTON_SELECT_2 = 5;
-const int BUTTON_SELECT_3 = 6;
-const int BUTTON_SELECT_4 = 7;
-const int BUTTON_SELECT_5 = 8;
-const int BUTTON_SELECT_6 = 9;
-const int BUTTON_SELECT_7 = A1;
-const int BUTTON_SELECT_8 = 11;
-const int SWITCH_DISC_POS_ZERO = 0;
-const int SWITCH_DISC_POS_COUNT = 0;
-const int SWITCH_ARM_HOR_IN = 0;
-const int SWITCH_ARM_HOR_OUT = 0;
-const int SWITCH_ARM_VERT_TOP = 0;
-const int SWITCH_ARM_VERT_BOTTOM = 0;
+const int BUTTON_START_OR_FILL_INFO = 5;
+const int BUTTON_SELECT_1 = 6;
+const int BUTTON_SELECT_2 = 7;
+const int BUTTON_SELECT_3 = 8;
+const int BUTTON_SELECT_4 = 9;
+const int BUTTON_SELECT_5 = 10;
+const int BUTTON_SELECT_6 = 11;
+const int BUTTON_SELECT_7 = 12;
+const int BUTTON_SELECT_8 = 13;
+const int SWITCH_DISC_POS_ZERO = A1;
+const int SWITCH_DISC_POS_COUNT = A2;
+const int SWITCH_ARM_HOR_IN = A3;
+const int SWITCH_ARM_HOR_OUT = A4;
+const int SWITCH_ARM_VERT_TOP = A5;
+const int SWITCH_ARM_VERT_BOTTOM = A6;
 
 //ERROR CODES
 const int ERROR_STRING_TOO_LONG = 0x00;

@@ -1,20 +1,20 @@
 //Valve, stir motor and stepper driver pins
-const int VALVE_INGREDIENT_1 = 0;
-const int VALVE_INGREDIENT_2 = 0;
-const int VALVE_INGREDIENT_3 = 0;
-const int VALVE_INGREDIENT_4 = 0;
-const int VALVE_INGREDIENT_5 = 0;
-const int VALVE_INGREDIENT_6 = 0;
-const int MOTOR_STIR = 0;
-const int STEPPER_DISC_DIR = 0;
-const int STEPPER_DISC_STEP = 0;
-const int STEPPER_DISC_ENABLE = 0;
-const int STEPPER_ARM_HOR_DIR = 0;
-const int STEPPER_ARM_HOR_STEP = 0;
-const int STEPPER_ARM_HOR_ENABLE = 0;
-const int STEPPER_ARM_VERT_DIR = 0;
-const int STEPPER_ARM_VERT_STEP = 0;
-const int STEPPER_ARM_VERT_ENABLE = 0;
+const int VALVE_INGREDIENT_1 = 34;
+const int VALVE_INGREDIENT_2 = 35;
+const int VALVE_INGREDIENT_3 = 36;
+const int VALVE_INGREDIENT_4 = 37;
+const int VALVE_INGREDIENT_5 = 38;
+const int VALVE_INGREDIENT_6 = 39;
+const int MOTOR_STIR = 4;
+const int STEPPER_DISC_DIR = 40;
+const int STEPPER_DISC_STEP = 41;
+const int STEPPER_DISC_ENABLE = 42;
+const int STEPPER_ARM_HOR_DIR = 43;
+const int STEPPER_ARM_HOR_STEP = 44;
+const int STEPPER_ARM_HOR_ENABLE = 45;
+const int STEPPER_ARM_VERT_DIR = 46;
+const int STEPPER_ARM_VERT_STEP = 47;
+const int STEPPER_ARM_VERT_ENABLE = 48;
 
 A4988 stepperDisc(200, STEPPER_DISC_DIR, STEPPER_DISC_STEP, STEPPER_DISC_ENABLE); //TODO: place pullup resistors on the enable pins
 A4988 stepperArmHor(200, STEPPER_ARM_HOR_DIR, STEPPER_ARM_HOR_STEP, STEPPER_ARM_HOR_ENABLE);
@@ -28,9 +28,7 @@ const float ML_PER_MS_MAX = 1; //Flow speed in milliliters per millisecond when 
 const int STIR_TIME_MS = 6000; //Time to stir the cocktail
 const int STIR_SPEED = 200; //PWM duty cycle for the stir motor
 
-volatile boolean homing = false;
 volatile boolean moving = false;
-volatile boolean home = false;
 volatile int steps = 0;
 
 //Configures all pins, initializes the stepper drivers and disables them to conserve energy
@@ -95,16 +93,13 @@ void rotateToPosZero() {
   {
     return;
   }
-  homing = true;
   stepperDisc.enable(); //Switch stepper driver on
-  while(!home)
+  while(digitalRead(SWITCH_DISC_POS_ZERO) == LOW)
   {
-    stepperDisc.move(1);
+    stepperDisc.move(-1);
     delay(4);
   }
   stepperDisc.disable(); //Switch stepper driver off
-  homing = false;
-  home = false;
   delay(100);
 }
 
@@ -114,7 +109,7 @@ void rotate(int positions) { //TODO: rewrite to use a predefined amount of stepp
   stepperDisc.enable(); //Switch stepper driver on
   while(steps < positions)
   {
-    stepperDisc.move(1);
+    stepperDisc.move(-1);
   }
   stepperDisc.disable(); //Switch stepper driver off
   moving = false;
@@ -138,8 +133,8 @@ void moveArmToHome() {
     stepperArmVert.enable(); //Switch stepper driver on
     while(digitalRead(SWITCH_ARM_VERT_TOP) == LOW)
     {
-      stepperArmVert.move(1);
-      delay(20);
+      stepperArmVert.move(-1);
+      delay(5);
     }
     stepperArmVert.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
     
@@ -148,8 +143,8 @@ void moveArmToHome() {
     stepperArmHor.enable(); //Switch stepper driver on
     while(digitalRead(SWITCH_ARM_HOR_OUT) == LOW)
     {
-      stepperArmHor.move(-1);
-      delay(20);
+      stepperArmHor.move(1);
+      delay(5);
     }
     stepperArmHor.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
     
@@ -158,8 +153,8 @@ void moveArmToHome() {
     stepperArmVert.enable(); //Switch stepper driver on
     while(digitalRead(SWITCH_ARM_VERT_BOTTOM) == LOW)
     {
-      stepperArmVert.move(-1);
-      delay(20);
+      stepperArmVert.move(1);
+      delay(5);
     }
     stepperArmVert.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
   }
@@ -168,8 +163,8 @@ void moveArmToHome() {
     stepperArmVert.enable(); //Switch stepper driver on
     while(digitalRead(SWITCH_ARM_VERT_BOTTOM) == LOW)
     {
-      stepperArmVert.move(-1);
-      delay(20);
+      stepperArmVert.move(1);
+      delay(5);
     }
     stepperArmVert.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
   }
@@ -181,8 +176,8 @@ void moveArmAndStir() {
   stepperArmVert.enable(); //Switch stepper driver on
   while(digitalRead(SWITCH_ARM_VERT_TOP) == LOW)
   {
-    stepperArmVert.move(1);
-    delay(20);
+    stepperArmVert.move(-1);
+    delay(5);
   }
   stepperArmVert.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
   
@@ -191,8 +186,8 @@ void moveArmAndStir() {
   stepperArmHor.enable(); //Switch stepper driver on
   while(digitalRead(SWITCH_ARM_HOR_IN) == LOW)
   {
-    stepperArmVert.move(1);
-    delay(20);
+    stepperArmVert.move(-1);
+    delay(5);
   }
   stepperArmHor.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
   
@@ -201,8 +196,8 @@ void moveArmAndStir() {
   stepperArmVert.enable(); //Switch stepper driver on
   while(digitalRead(SWITCH_ARM_VERT_BOTTOM) == LOW)
   {
-    stepperArmVert.move(-1);
-    delay(20);
+    stepperArmVert.move(1);
+    delay(5);
   }
   stepperArmVert.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
   delay(100);
@@ -216,7 +211,7 @@ void moveArmAndStir() {
   while(digitalRead(SWITCH_ARM_VERT_TOP) == LOW)
   {
     stepperArmVert.move(1);
-    delay(20);
+    delay(5);
   }
   stepperArmVert.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
   
@@ -226,7 +221,7 @@ void moveArmAndStir() {
   while(digitalRead(SWITCH_ARM_HOR_OUT) == LOW)
   {
     stepperArmVert.move(-1);
-    delay(20);
+    delay(5);
   }
   stepperArmHor.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
   
@@ -235,8 +230,8 @@ void moveArmAndStir() {
   stepperArmVert.enable(); //Switch stepper driver on
   while(digitalRead(SWITCH_ARM_VERT_BOTTOM) == LOW)
   {
-    stepperArmVert.move(-1);
-    delay(20);
+    stepperArmVert.move(1);
+    delay(5);
   }
   stepperArmVert.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
   
@@ -250,14 +245,7 @@ void moveArmAndStir() {
 
 //Called when a limit switch triggers the hardware interrupt
 void switchISR() {
-  if(homing)
-  {
-    if(digitalRead(SWITCH_DISC_POS_ZERO) == HIGH)
-    {
-      home = true;
-    }
-  }
-  else if(moving)
+  if(moving)
   {
     if(digitalRead(SWITCH_DISC_POS_COUNT) == HIGH)
     {

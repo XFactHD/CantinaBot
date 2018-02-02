@@ -1,5 +1,5 @@
-const int TRIGGER_PINS[] { 39, 0, 0, 0, 0, 0 };
-const int ECHO_PINS[] { 37, 0, 0, 0, 0, 0 };
+const int TRIGGER_PINS[] { 22, 24, 26, 28, 30, 32 };
+const int ECHO_PINS[] { 23, 25, 27, 28, 31, 33 };
 
 const float CM_PER_MICROSEC = .03434; //Distance sound travels in air per microsecond
 

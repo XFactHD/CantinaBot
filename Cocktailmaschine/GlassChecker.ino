@@ -1,4 +1,4 @@
-const int GLASS_SENSOR = 13;
+const int GLASS_SENSOR = A0;
 
 //Called when a recipe was selected by the user, waits 10 seconds for the user to put a glass on the turntable
 void waitForGlass() {
