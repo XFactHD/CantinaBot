@@ -44,6 +44,7 @@ public class DisplayManager
     private static Button selectButton;
     private static Button connectButton;
     private static Label stateLabel;
+    private static Button consoleButton;
     private static ArrayList<Pair<TextField, ArrayList<Spinner<Integer>>>> recipeList = new ArrayList<>();
     private static Button loadRecipesButton;
     private static Button sendRecipesButton;
@@ -240,6 +241,19 @@ public class DisplayManager
         state.setTextFill(Color.web("#FF0000"));
         status.add(state, 3, 0);
         stateLabel = state;
+
+        Button console = new Button("Open Console");
+        console.setOnAction(new EventHandler<ActionEvent>()
+        {
+            @Override
+            public void handle(ActionEvent event)
+            {
+                ConsoleManager.openConsole();
+                consoleButton.setDisable(true);
+            }
+        });
+        status.add(console, 4, 0);
+        consoleButton = console;
 
         root.add(status, 0, 3);
         state.setPrefWidth(111);
@@ -592,5 +606,10 @@ public class DisplayManager
         sendRecipesButton.setDisable(false);
         loadIngredientsButton.setDisable(false);
         sendIngredientsButton.setDisable(false);
+    }
+
+    public static void onConsoleClosed()
+    {
+        consoleButton.setDisable(false);
     }
 }

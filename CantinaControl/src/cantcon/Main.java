@@ -132,7 +132,7 @@ public class Main extends Application implements SerialPortEventListener
         {
             if (connected)
             {
-                sendSerialMessage("TERMINATE");
+                stopSerialComm();
             }
             port.removeEventListener();
             port.close();
@@ -189,7 +189,7 @@ public class Main extends Application implements SerialPortEventListener
             try
             {
                 String inputLine = input.readLine();
-                System.out.println(inputLine);
+                printInfo(inputLine);
                 Platform.runLater(new Runnable()
                 {
                     @Override
@@ -273,8 +273,8 @@ public class Main extends Application implements SerialPortEventListener
         }
         catch (IOException e)
         {
-            System.err.println("An error occurred while sending serial message!");
-            e.printStackTrace();
+            printError("An error occurred while sending serial message!");
+            printStacktrace(e);
             return false;
         }
     }
@@ -292,6 +292,32 @@ public class Main extends Application implements SerialPortEventListener
     public void setWaitingForResponse()
     {
         this.waitingForResponse = true;
+    }
+
+    public void printInfo(String line)
+    {
+        System.out.println(line);
+        ConsoleManager.printToConsole("[INFO] " + line);
+    }
+
+    public void printError(String line)
+    {
+        System.err.println(line);
+        ConsoleManager.printToConsole("[ERROR] " + line);
+    }
+
+    public void printStacktrace(Exception e)
+    {
+        e.printStackTrace();
+        StringBuilder builder = new StringBuilder(e.getClass().getName() + System.lineSeparator());
+        for (StackTraceElement element : e.getStackTrace())
+        {
+            builder.append("\t");
+            builder.append("at ");
+            builder.append(element.toString());
+            builder.append(System.lineSeparator());
+        }
+        ConsoleManager.printToConsole(builder.toString());
     }
 
     private static void extractDLLs()
