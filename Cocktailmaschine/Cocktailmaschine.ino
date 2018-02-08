@@ -37,7 +37,7 @@ const int STATE_ERRORED = 8;
 const int STATE_READ_FILL_LEVEL = 9;
 
 //TODO: fill in all recipes
-char recipeNames[8][9] {"RumCola", "ColaWodk", "ColaWhis", "Daiquiri", "WhiskySo", "WodkaSou", "WhiskyD", "WodkaD"}; //Names of the cocktails, max string length is 8 (extra space is for null character)!
+char recipeNames[8][9] {"RumCola", "WodkaHB", "WhiskyHB", "Daiquiri", "WhiskySo", "WodkaSou", "Whisky", "Wodka"}; //Names of the cocktails, max string length is 8 (extra space is for null character)!
 int recipeIngredientCounts[8] {2, 2, 2, 3, 3, 3, 1, 1}; //Number of ingredients of the cocktails
 int recipeIngredients[8][6] { //Ingredients of the cocktails
   {0,  1, -1, -1, -1, -1},
