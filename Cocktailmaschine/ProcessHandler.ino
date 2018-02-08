@@ -31,7 +31,7 @@ const int STIR_SPEED = 200; //PWM duty cycle for the stir motor
 volatile boolean moving = false;
 volatile int steps = 0;
 
-//Configures all pins, initializes the stepper drivers and disables them to conserve energy
+//Configures all pins, initializes the stepper drivers and disables them to conserve energy (and my sanity :D)
 void initProcessHandler() {
   for(int i = 0; i < 6; i++)
   {
@@ -89,15 +89,20 @@ void process() {
 
 //Homes the turntable (glass holder at the start position)
 void rotateToPosZero() {
-  if(digitalRead(SWITCH_DISC_POS_ZERO) == HIGH)
+  if(digitalRead(SWITCH_DISC_POS) == HIGH && digitalRead(GLASS_SENSOR) == LOW) //If a magnet triggers the hall effect sensor and the glass sensor can look through the disk, we are at pos zero
   {
     return;
   }
+  
   stepperDisc.enable(); //Switch stepper driver on
-  while(digitalRead(SWITCH_DISC_POS_ZERO) == LOW)
+  while(true)
   {
     stepperDisc.move(-1);
     delay(4);
+    if(digitalRead(SWITCH_DISC_POS) == HIGH && digitalRead(GLASS_SENSOR) == LOW)
+    {
+      break; //If a magnet triggers the hall effect sensor and the glass sensor can look through the disk, we arrived at pos zero
+    }
   }
   stepperDisc.disable(); //Switch stepper driver off
   delay(100);
@@ -247,7 +252,7 @@ void moveArmAndStir() {
 void switchISR() {
   if(moving)
   {
-    if(digitalRead(SWITCH_DISC_POS_COUNT) == HIGH)
+    if(digitalRead(SWITCH_DISC_POS) == HIGH)
     {
       steps++;
     }
