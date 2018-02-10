@@ -14,11 +14,6 @@ const int BUTTON_SELECT_5 = 10;
 const int BUTTON_SELECT_6 = 11;
 const int BUTTON_SELECT_7 = 12;
 const int BUTTON_SELECT_8 = 13;
-const int SWITCH_DISC_POS = A2;
-const int SWITCH_ARM_HOR_IN = A3;
-const int SWITCH_ARM_HOR_OUT = A4;
-const int SWITCH_ARM_VERT_TOP = A5;
-const int SWITCH_ARM_VERT_BOTTOM = A6;
 
 //ERROR CODES
 const int ERROR_STRING_TOO_LONG = 0x00;
@@ -35,7 +30,6 @@ const int STATE_POST_PROCESS = 7;
 const int STATE_ERRORED = 8;
 const int STATE_READ_FILL_LEVEL = 9;
 
-//TODO: fill in all recipes
 char recipeNames[8][9] {"RumCola", "WodkaHB", "WhiskyHB", "Daiquiri", "WhiskySo", "WodkaSou", "Whisky", "Wodka"}; //Names of the cocktails, max string length is 8 (extra space is for null character)!
 int recipeIngredientCounts[8] {2, 2, 2, 3, 3, 3, 1, 1}; //Number of ingredients of the cocktails
 int recipeIngredients[8][6] { //Ingredients of the cocktails
@@ -90,11 +84,6 @@ void setup() {
   pinMode(BUTTON_SELECT_6, INPUT);
   pinMode(BUTTON_SELECT_7, INPUT);
   pinMode(BUTTON_SELECT_8, INPUT);
-  pinMode(SWITCH_DISC_POS, INPUT);
-  pinMode(SWITCH_ARM_HOR_IN, INPUT);
-  pinMode(SWITCH_ARM_HOR_OUT, INPUT);
-  pinMode(SWITCH_ARM_VERT_TOP, INPUT);
-  pinMode(SWITCH_ARM_VERT_BOTTOM, INPUT);
   pinMode(13, INPUT);
   waitForSerialComm();
   if(state == STATE_SERIAL_COMM)
@@ -105,7 +94,7 @@ void setup() {
   //Attach interrupts for user input buttons and limit switches
   attachInterrupt(digitalPinToInterrupt(BUTTON_INTERRUPT), buttonISR, RISING);
   attachInterrupt(digitalPinToInterrupt(SWITCH_INTERRUPT), switchISR, RISING);
-  //readFromEEPROM(); //TODO: reenable once finished
+  readFromEEPROM();
   moveArmToHome();
   rotateToPosZero();
   readAllFillLevels();

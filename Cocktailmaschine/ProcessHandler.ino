@@ -15,8 +15,14 @@ const int STEPPER_ARM_HOR_ENABLE = 45;
 const int STEPPER_ARM_VERT_DIR = 46;
 const int STEPPER_ARM_VERT_STEP = 47;
 const int STEPPER_ARM_VERT_ENABLE = 48;
+const int SWITCH_DISC_ZERO = A1;
+const int SWITCH_DISC_POS = A2;
+const int SWITCH_ARM_HOR_IN = A3;
+const int SWITCH_ARM_HOR_OUT = A4;
+const int SWITCH_ARM_VERT_TOP = A5;
+const int SWITCH_ARM_VERT_BOTTOM = A6;
 
-A4988 stepperDisc(200, STEPPER_DISC_DIR, STEPPER_DISC_STEP, STEPPER_DISC_ENABLE); //TODO: place pullup resistors on the enable pins
+A4988 stepperDisc(200, STEPPER_DISC_DIR, STEPPER_DISC_STEP, STEPPER_DISC_ENABLE);
 A4988 stepperArmHor(200, STEPPER_ARM_HOR_DIR, STEPPER_ARM_HOR_STEP, STEPPER_ARM_HOR_ENABLE);
 A4988 stepperArmVert(200, STEPPER_ARM_VERT_DIR, STEPPER_ARM_VERT_STEP, STEPPER_ARM_VERT_ENABLE);
 
@@ -38,6 +44,13 @@ void initProcessHandler() {
     pinMode(VALVES[i], OUTPUT);
     digitalWrite(VALVES[i], LOW);
   }
+  
+  pinMode(SWITCH_DISC_ZERO, INPUT_PULLUP);
+  pinMode(SWITCH_DISC_POS, INPUT);
+  pinMode(SWITCH_ARM_HOR_IN, INPUT_PULLUP);
+  pinMode(SWITCH_ARM_HOR_OUT, INPUT_PULLUP);
+  pinMode(SWITCH_ARM_VERT_TOP, INPUT_PULLUP);
+  pinMode(SWITCH_ARM_VERT_BOTTOM, INPUT_PULLUP);
   pinMode(MOTOR_STIR, OUTPUT);
   digitalWrite(MOTOR_STIR, LOW);
   stepperDisc.begin();
@@ -89,27 +102,20 @@ void process() {
 
 //Homes the turntable (glass holder at the start position)
 void rotateToPosZero() {
-  if(digitalRead(SWITCH_DISC_POS) == HIGH && digitalRead(GLASS_SENSOR) == LOW) //If a magnet triggers the hall effect sensor and the glass sensor can look through the disk, we are at pos zero
-  {
-    return;
-  }
+  if(digitalRead(SWITCH_DISC_ZERO) == LOW) { return; }
   
   stepperDisc.enable(); //Switch stepper driver on
-  while(true)
+  while(digitalRead(SWITCH_DISC_ZERO) == HIGH)
   {
     stepperDisc.move(-1);
     delay(4);
-    if(digitalRead(SWITCH_DISC_POS) == HIGH && digitalRead(GLASS_SENSOR) == LOW)
-    {
-      break; //If a magnet triggers the hall effect sensor and the glass sensor can look through the disk, we arrived at pos zero
-    }
   }
   stepperDisc.disable(); //Switch stepper driver off
   delay(100);
 }
 
 //Rotates the turntable by the amount of stations passed in
-void rotate(int positions) { //TODO: rewrite to use a predefined amount of stepper steps
+void rotate(int positions) {
   moving = true;
   stepperDisc.enable(); //Switch stepper driver on
   while(steps < positions)
@@ -133,45 +139,45 @@ void pourIngredient(int ingredient, int amount) {
 
 //Homes the stir arm (outside the radius of the turntable, spoon in the washing container)
 void moveArmToHome() {
-  if(digitalRead(SWITCH_ARM_HOR_OUT) == LOW)
+  if(digitalRead(SWITCH_ARM_HOR_OUT) == HIGH)
   {
     stepperArmVert.enable(); //Switch stepper driver on
-    while(digitalRead(SWITCH_ARM_VERT_TOP) == LOW)
+    while(digitalRead(SWITCH_ARM_VERT_TOP) == HIGH)
     {
       stepperArmVert.move(-1);
       delay(5);
     }
-    stepperArmVert.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
+    stepperArmVert.disable(); //Switch stepper driver off
     
     delay(100);
     
     stepperArmHor.enable(); //Switch stepper driver on
-    while(digitalRead(SWITCH_ARM_HOR_OUT) == LOW)
+    while(digitalRead(SWITCH_ARM_HOR_OUT) == HIGH)
     {
       stepperArmHor.move(1);
       delay(5);
     }
-    stepperArmHor.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
+    stepperArmHor.disable(); //Switch stepper driver off
     
     delay(100);
 
     stepperArmVert.enable(); //Switch stepper driver on
-    while(digitalRead(SWITCH_ARM_VERT_BOTTOM) == LOW)
+    while(digitalRead(SWITCH_ARM_VERT_BOTTOM) == HIGH)
     {
       stepperArmVert.move(1);
       delay(5);
     }
-    stepperArmVert.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
+    stepperArmVert.disable(); //Switch stepper driver off
   }
   else
   {
     stepperArmVert.enable(); //Switch stepper driver on
-    while(digitalRead(SWITCH_ARM_VERT_BOTTOM) == LOW)
+    while(digitalRead(SWITCH_ARM_VERT_BOTTOM) == HIGH)
     {
       stepperArmVert.move(1);
       delay(5);
     }
-    stepperArmVert.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
+    stepperArmVert.disable(); //Switch stepper driver off
   }
   delay(100);
 }
@@ -179,32 +185,32 @@ void moveArmToHome() {
 //Moves the arm into the glass, stirs the cocktail and moves the arm back to the washing container
 void moveArmAndStir() {
   stepperArmVert.enable(); //Switch stepper driver on
-  while(digitalRead(SWITCH_ARM_VERT_TOP) == LOW)
+  while(digitalRead(SWITCH_ARM_VERT_TOP) == HIGH)
   {
     stepperArmVert.move(-1);
     delay(5);
   }
-  stepperArmVert.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
+  stepperArmVert.disable(); //Switch stepper driver off
   
   delay(100);
 
   stepperArmHor.enable(); //Switch stepper driver on
-  while(digitalRead(SWITCH_ARM_HOR_IN) == LOW)
+  while(digitalRead(SWITCH_ARM_HOR_IN) == HIGH)
   {
     stepperArmVert.move(-1);
     delay(5);
   }
-  stepperArmHor.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
+  stepperArmHor.disable(); //Switch stepper driver off
   
   delay(100);
 
   stepperArmVert.enable(); //Switch stepper driver on
-  while(digitalRead(SWITCH_ARM_VERT_BOTTOM) == LOW)
+  while(digitalRead(SWITCH_ARM_VERT_BOTTOM) == HIGH)
   {
     stepperArmVert.move(1);
     delay(5);
   }
-  stepperArmVert.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
+  stepperArmVert.disable(); //Switch stepper driver off
   delay(100);
 
   analogWrite(MOTOR_STIR, STIR_SPEED);
@@ -213,32 +219,32 @@ void moveArmAndStir() {
   delay(500);
 
   stepperArmVert.enable(); //Switch stepper driver on
-  while(digitalRead(SWITCH_ARM_VERT_TOP) == LOW)
+  while(digitalRead(SWITCH_ARM_VERT_TOP) == HIGH)
   {
     stepperArmVert.move(1);
     delay(5);
   }
-  stepperArmVert.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
+  stepperArmVert.disable(); //Switch stepper driver off
   
   delay(100);
 
   stepperArmHor.enable(); //Switch stepper driver on
-  while(digitalRead(SWITCH_ARM_HOR_OUT) == LOW)
+  while(digitalRead(SWITCH_ARM_HOR_OUT) == HIGH)
   {
     stepperArmVert.move(-1);
     delay(5);
   }
-  stepperArmHor.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
+  stepperArmHor.disable(); //Switch stepper driver off
   
   delay(100);
 
   stepperArmVert.enable(); //Switch stepper driver on
-  while(digitalRead(SWITCH_ARM_VERT_BOTTOM) == LOW)
+  while(digitalRead(SWITCH_ARM_VERT_BOTTOM) == HIGH)
   {
     stepperArmVert.move(1);
     delay(5);
   }
-  stepperArmVert.disable(); //Switch stepper driver on //TODO: check if this is doable or if the arm would just fall down
+  stepperArmVert.disable(); //Switch stepper driver off
   
   delay(100);
 
@@ -248,7 +254,7 @@ void moveArmAndStir() {
   digitalWrite(MOTOR_STIR, LOW);
 }
 
-//Called when a limit switch triggers the hardware interrupt
+//Called when the hall effect sensor triggers the hardware interrupt
 void switchISR() {
   if(moving)
   {

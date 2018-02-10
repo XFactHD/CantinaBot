@@ -33,7 +33,7 @@ void receiveMessage() {
     needsReboot = true;
     Serial.println("ACK");
     printMessage("SERIAL CLOSED", "WRITING EEPROM");
-    delay(500);//writeToEEPROM(); //TODO: reactivate when finished
+    writeToEEPROM();
     printMessage("SERIAL CLOSED", "REBOOT ME!");
     delay(100);
   }
@@ -143,7 +143,6 @@ void receiveMessage() {
 
         setName(i, recipeParts[0]);
         int ingredientCount = atoi(recipeParts[1]);
-        //recipeIngredientCounts[i] = ingredientCount; //TODO: check if this is necessary
         for(int j = 0; j < ingredientCount; j++)
         {
           int stringIndex = j + 2;
