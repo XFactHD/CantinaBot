@@ -148,7 +148,7 @@ public class Main extends Application implements SerialPortEventListener
         while (portName.equals(""))
         {
             portName = DisplayManager.openPortDialog(errored);
-            if (portName == null) { close(); return; }
+            if (portName == null) { return; }
             if (portName.equals("")) { errored = true; continue; }
             if (initializeSerialPort(portName)) { break; }
             portName = "";
