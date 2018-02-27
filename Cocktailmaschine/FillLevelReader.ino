@@ -1,10 +1,10 @@
 const int TRIGGER_PINS[] { 22, 24, 26, 28, 30, 32 };
-const int ECHO_PINS[] { 23, 25, 27, 28, 31, 33 };
+const int ECHO_PINS[] { 23, 25, 27, 29, 31, 33 };
 
 const float CM_PER_MICROSEC = .03434; //Distance sound travels in air per microsecond
 
-const float BOTTLE_HEIGHT = 30; //Bottle height (difference between full bottle and empty bottle)
-const int DIST_MIN = 0; //Sensor's minimum distance + safety distance to fluid
+const float DIST_FULL = 0; //Sensor reading when bottle is full
+const float DIST_EMPTY = 27; //Sensor reading when bottle is empty
 
 //Configures pins for the ultrasonic distance sensors
 void initFillLevelReader() {
@@ -38,12 +38,10 @@ void readFillLevelsPostMixing(int recipe) {
 //Measures and calculates the fill level of the container belonging to the trigger and echo pins
 int measureFillLevel(int trigger, int echo) {
   float dist = measureDistance(trigger, echo);
-  if(dist > BOTTLE_HEIGHT)
-  {
-    return 0;
-  }
+  if(dist > DIST_EMPTY) { return 0; }
+  if(dist < DIST_FULL) { return 100; }
 
-  int percentage = 100 - ((dist / BOTTLE_HEIGHT) * 100.0);
+  int percentage = int(100.0 - mapFloat(dist, DIST_FULL, DIST_EMPTY, 0.0, 100.0));
   percentage = constrain(percentage, 0, 100);
   return percentage;
 }
@@ -58,13 +56,9 @@ float measureDistance(int trigger, int echo) {
 
   float time = pulseIn(echo, HIGH, 300000);
   time /= 2.0;
-  if(time == 0)
-  {
-    return BOTTLE_HEIGHT + 1;
-  }
   
   float distance = time * CM_PER_MICROSEC;
-  distance -= float(DIST_MIN);
+
   return distance;
 }
 
