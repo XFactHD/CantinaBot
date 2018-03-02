@@ -31,8 +31,10 @@
 *.out
 *.app
 *.class
-*.jar
+#*.jar
 *.jnlp
 *.html
 CantinaControl/.idea/*
 CantinaControl/CantinaControl.iml
+CantinaControl/out/*
+CantinaControl/libs/*
