@@ -36,22 +36,22 @@ char recipeNames[8][9] {"RumCola", "WodkaHB", "WhiskyHB", "Daiquiri", "WhiskySo"
 int recipeIngredientCounts[8] {2, 2, 2, 3, 3, 3, 1, 1}; //Number of ingredients of the cocktails
 int recipeIngredients[8][6] { //Ingredients of the cocktails
   {0,  1, -1, -1, -1, -1},
-  {2,  1, -1, -1, -1, -1},
-  {3,  1, -1, -1, -1, -1},
+  {1,  2, -1, -1, -1, -1},
+  {1,  3, -1, -1, -1, -1},
   {0,  4,  5, -1, -1, -1},
   {3,  4,  5, -1, -1, -1},
   {2,  4,  5, -1, -1, -1},
   {3, -1, -1, -1, -1, -1},
   {2, -1, -1, -1, -1, -1} };
 int recipeIngredientAmounts[8][6] { //Amount of each ingredient of a cocktail
-  {50, 180, -1, -1, -1, -1},
-  {50, 180, -1, -1, -1, -1},
-  {50, 180, -1, -1, -1, -1},
-  {50,  25, 25, -1, -1, -1},
-  {50,  25, 25, -1, -1, -1},
-  {50,  25, 25, -1, -1, -1},
-  {50,  -1, -1, -1, -1, -1},
-  {50,  -1, -1, -1, -1, -1} };
+  { 50, 180, -1, -1, -1, -1},
+  {180,  50, -1, -1, -1, -1},
+  {180,  50, -1, -1, -1, -1},
+  { 50,  25, 25, -1, -1, -1},
+  { 50,  25, 25, -1, -1, -1},
+  { 50,  25, 25, -1, -1, -1},
+  { 50,  -1, -1, -1, -1, -1},
+  { 50,  -1, -1, -1, -1, -1} };
 
 char ingredientNames[6][6] { //Names of the ingredients, max string length is 5 (extra space is for null character)!
   "Rum",

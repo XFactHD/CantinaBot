@@ -34,7 +34,7 @@ const float ML_PER_MS_MAX_SMALL = .08; //Flow speed through a small valve in mil
 const float ML_PER_MS_MIN_BIG = .06; //Flow speed through a big valve in milliliters per millisecond when the bottle is almost empty (currently estimated)
 const float ML_PER_MS_MAX_BIG = .3; //Flow speed through a big valve in milliliters per millisecond when the bottle is full (currently estimated)
 const int STIR_TIME_MS = 6000; //Time to stir the cocktail
-const int STIR_SPEED = 60; //PWM duty cycle for the stir motor
+const int STIR_SPEED = 40; //PWM duty cycle for the stir motor
 
 int openValve = -1; //Used to drain the system in a controlled manner
 
@@ -99,8 +99,8 @@ void process() {
     lastIngredient = ingredient;
   }
 
-  rotate(POS_STIR_ARM - lastIngredient);
-
+  rotate(POS_STIR_ARM - (lastIngredient + 1)); //Add 1 to the ingredient index because its internal index ranges from 0 to 5 and its index on the table ranges from  to 6
+  
   moveArmAndStir();
 
   rotateToPosZero();
