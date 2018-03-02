@@ -1,10 +1,15 @@
 const int GLASS_SENSOR = A0;
 
+//Initializes the GlassChecker
+void initGlassChecker() {
+  pinMode(GLASS_SENSOR, INPUT);
+}
+
 //Called when a recipe was selected by the user, waits 10 seconds for the user to put a glass on the turntable
 void waitForGlass() {
   printMessageMultiArg("Auswahl: ", recipeNames[selectedRecipe], "Warte auf Glass!", "");
   boolean success = true;
-  while(digitalRead(GLASS_SENSOR) == LOW)
+  while(digitalRead(GLASS_SENSOR) == HIGH)
   {
     if(timeOver(10000))
     {

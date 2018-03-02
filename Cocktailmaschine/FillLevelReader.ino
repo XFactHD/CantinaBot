@@ -31,8 +31,6 @@ void readFillLevelsPostMixing(int recipe) {
     int ingredient = getIngredient(recipe, i);
     fillLevels[ingredient] = measureFillLevel(TRIGGER_PINS[ingredient], ECHO_PINS[ingredient]);
   }
-  
-  setState(STATE_MAIN_MENU);
 }
 
 //Measures and calculates the fill level of the container belonging to the trigger and echo pins

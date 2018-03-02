@@ -15,7 +15,7 @@ const int STEPPER_ARM_HOR_ENABLE = 45;
 const int STEPPER_ARM_VERT_DIR = 46;
 const int STEPPER_ARM_VERT_STEP = 47;
 const int STEPPER_ARM_VERT_ENABLE = 48;
-const int SWITCH_DISC_ZERO = A1;
+const int SWITCH_DISC_ZERO = A7;
 const int SWITCH_DISC_POS = A2;
 const int SWITCH_ARM_HOR_IN = A3;
 const int SWITCH_ARM_HOR_OUT = A4;
@@ -29,15 +29,14 @@ A4988 stepperArmVert(200, STEPPER_ARM_VERT_DIR, STEPPER_ARM_VERT_STEP, STEPPER_A
 const int VALVES[] { VALVE_INGREDIENT_1, VALVE_INGREDIENT_2, VALVE_INGREDIENT_3, VALVE_INGREDIENT_4, VALVE_INGREDIENT_5, VALVE_INGREDIENT_6 };
 
 const int POS_STIR_ARM = 7; //Position of the stir arm above the table (pos 0 = start, pos 1-6 = ingredients, pos 7 = stir arm)
-const float ML_PER_MS_MIN_SMALL = 1; //Flow speed through s small valve in milliliters per millisecond when the bottle is almost empty
-const float ML_PER_MS_MAX_SMALL = 1; //Flow speed through a small valve in milliliters per millisecond when the bottle is full
-const float ML_PER_MS_MIN_BIG = 1; //Flow speed through s big valve in milliliters per millisecond when the bottle is almost empty
-const float ML_PER_MS_MAX_BIG = 1; //Flow speed through a big valve in milliliters per millisecond when the bottle is full
+const float ML_PER_MS_MIN_SMALL = .02; //Flow speed through s small valve in milliliters per millisecond when the bottle is almost empty (currently estimated)
+const float ML_PER_MS_MAX_SMALL = .08; //Flow speed through a small valve in milliliters per millisecond when the bottle is full (currently estimated)
+const float ML_PER_MS_MIN_BIG = .06; //Flow speed through a big valve in milliliters per millisecond when the bottle is almost empty (currently estimated)
+const float ML_PER_MS_MAX_BIG = .3; //Flow speed through a big valve in milliliters per millisecond when the bottle is full (currently estimated)
 const int STIR_TIME_MS = 6000; //Time to stir the cocktail
-const int STIR_SPEED = 200; //PWM duty cycle for the stir motor
+const int STIR_SPEED = 60; //PWM duty cycle for the stir motor
 
-volatile boolean moving = false;
-volatile int steps = 0;
+int openValve = -1; //Used to drain the system in a controlled manner
 
 //Configures all pins, initializes the stepper drivers and disables them to conserve energy (and my sanity :D)
 void initProcessHandler() {
@@ -65,9 +64,13 @@ void initProcessHandler() {
 
 //Checks if all ingredients for the recipe selected by the user are available in sufficient amounts
 boolean checkIngredientsAvailable(int recipe) {
-  for(int i = 0; i < 6; i++) { //TODO: remove after testing
-    fillLevels[i] = 50;
-  }
+  //------------------------------------------------------------------------------------------------
+  #ifdef DEBUG
+  for(int i = 0; i < 6; i++) { //DEBUG CODE
+    fillLevels[i] = 50;        //Allows operation without liquid
+  }                            //remove '#define DEBUG' in Cocktailmaschine.ino for normal operation
+  #endif
+  //-------------------------------------------------------------------------------------------------
   
   for(int i = 0; i < getNumberOfIngredients(recipe); i++)
   {
@@ -82,6 +85,7 @@ boolean checkIngredientsAvailable(int recipe) {
 //Handles the production of the selected cocktail
 void process() {
   int lastIngredient = -1;
+
   for(int i = 0; i < getNumberOfIngredients(selectedRecipe); i++)
   {
     int ingredient = getIngredient(selectedRecipe, i);
@@ -99,6 +103,8 @@ void process() {
 
   moveArmAndStir();
 
+  rotateToPosZero();
+
   setState(STATE_POST_PROCESS);
 }
 
@@ -112,21 +118,34 @@ void rotateToPosZero() {
     stepperDisc.move(-1);
     delay(4);
   }
+  delay(4);
+  stepperDisc.move(-32);
+  delay(500);
   stepperDisc.disable(); //Switch stepper driver off
   delay(100);
 }
 
-//Rotates the turntable by the amount of stations passed in
+//Rotates the turntable by the amount of positions passed in
 void rotate(int positions) {
-  moving = true;
+  int steps = 0;
+  int lastHallEffectVal = LOW;
   stepperDisc.enable(); //Switch stepper driver on
+  stepperDisc.move(-150); //Get the magnet out of range of the hall effect sensor
   while(steps < positions)
   {
     stepperDisc.move(-1);
+    delay(4);
+    
+    int val = digitalRead(SWITCH_DISC_POS);
+    if(val == HIGH && lastHallEffectVal == LOW) {
+      lastHallEffectVal = HIGH;
+      steps++;
+    }
+    else if(val == LOW && lastHallEffectVal == HIGH) {
+      lastHallEffectVal = LOW;
+    }
   }
   stepperDisc.disable(); //Switch stepper driver off
-  moving = false;
-  steps = 0;
 }
 
 //Pours the ingredient at the defined amount into the glass
@@ -146,6 +165,35 @@ void pourIngredient(int ingredient, int amount) {
   delay(time);
   digitalWrite(VALVES[ingredient], LOW);
   delay(500);
+}
+
+//Opens (or closes if already open) the selected valve to drain the system
+void switchValveToDrain(int index) {
+  if(openValve == index)
+  {
+    digitalWrite(VALVES[index], LOW);
+    openValve = -1;
+    setState(STATE_FILL_INFO);
+  }
+  else if(openValve == -1)
+  {
+    digitalWrite(VALVES[index], HIGH);
+    openValve = index;
+  }
+  else
+  {
+    digitalWrite(VALVES[openValve], LOW);
+    digitalWrite(VALVES[index], HIGH);
+    openValve = index;
+    setState(STATE_DRAINING); //Set the state to draining again to force a display update
+  }
+}
+
+//Shows the currently open valve on the display
+void printDrainInfo() {
+  char *val = "";
+  itoa(openValve + 1, val, 10);
+  printMessageMultiArg("Draining!", " ", "Valve: ", val);
 }
 
 //Homes the stir arm (outside the radius of the turntable, spoon in the washing container)
@@ -168,6 +216,7 @@ void moveArmToHome() {
       stepperArmHor.move(1);
       delay(5);
     }
+    stepperArmHor.move(10);
     stepperArmHor.disable(); //Switch stepper driver off
     
     delay(100);
@@ -208,9 +257,10 @@ void moveArmAndStir() {
   stepperArmHor.enable(); //Switch stepper driver on
   while(digitalRead(SWITCH_ARM_HOR_IN) == HIGH)
   {
-    stepperArmVert.move(-1);
+    stepperArmHor.move(-1);
     delay(5);
   }
+  stepperArmHor.move(-5);
   stepperArmHor.disable(); //Switch stepper driver off
   
   delay(100);
@@ -232,7 +282,7 @@ void moveArmAndStir() {
   stepperArmVert.enable(); //Switch stepper driver on
   while(digitalRead(SWITCH_ARM_VERT_TOP) == HIGH)
   {
-    stepperArmVert.move(1);
+    stepperArmVert.move(-1);
     delay(5);
   }
   stepperArmVert.disable(); //Switch stepper driver off
@@ -242,10 +292,11 @@ void moveArmAndStir() {
   stepperArmHor.enable(); //Switch stepper driver on
   while(digitalRead(SWITCH_ARM_HOR_OUT) == HIGH)
   {
-    stepperArmVert.move(-1);
+    stepperArmHor.move(1);
     delay(5);
   }
-  stepperArmHor.disable(); //Switch stepper driver off
+  stepperArmHor.move(10);
+  //Keep the horizontal stepper driver on to make sure the arm doesn't get moved out of the parking position by the vibrations from the stir motor
   
   delay(100);
 
@@ -260,19 +311,10 @@ void moveArmAndStir() {
   delay(100);
 
   //Cleaning in a glass of water
-  digitalWrite(MOTOR_STIR, HIGH);
+  analogWrite(MOTOR_STIR, STIR_SPEED);
   delay(2000);
-  digitalWrite(MOTOR_STIR, LOW);
-}
+  analogWrite(MOTOR_STIR, 0);
 
-//Called when the hall effect sensor triggers the hardware interrupt
-void switchISR() {
-  if(moving)
-  {
-    if(digitalRead(SWITCH_DISC_POS) == HIGH)
-    {
-      steps++;
-    }
-  }
+  stepperArmHor.disable(); //Switch stepper driver off
 }
 

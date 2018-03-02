@@ -2,9 +2,10 @@
 #include <LiquidCrystal.h>
 #include <A4988.h>
 
+#define DEBUG
+
 //PINS
 const int BUTTON_INTERRUPT = 2;
-const int SWITCH_INTERRUPT = 3;
 const int BUTTON_START_OR_FILL_INFO = 5;
 const int BUTTON_SELECT_1 = 6;
 const int BUTTON_SELECT_2 = 7;
@@ -29,6 +30,7 @@ const int STATE_WORKING = 6;
 const int STATE_POST_PROCESS = 7;
 const int STATE_ERRORED = 8;
 const int STATE_READ_FILL_LEVEL = 9;
+const int STATE_DRAINING = 10;
 
 char recipeNames[8][9] {"RumCola", "WodkaHB", "WhiskyHB", "Daiquiri", "WhiskySo", "WodkaSou", "Whisky", "Wodka"}; //Names of the cocktails, max string length is 8 (extra space is for null character)!
 int recipeIngredientCounts[8] {2, 2, 2, 3, 3, 3, 1, 1}; //Number of ingredients of the cocktails
@@ -73,6 +75,7 @@ void setup() {
   setState(STATE_INIT);
   printMessage("INITIALIZATION", "PLEASE WAIT");
   initFillLevelReader();
+  initGlassChecker();
   initProcessHandler();
   //Configure pins
   pinMode(BUTTON_START_OR_FILL_INFO, INPUT);
@@ -84,17 +87,15 @@ void setup() {
   pinMode(BUTTON_SELECT_6, INPUT);
   pinMode(BUTTON_SELECT_7, INPUT);
   pinMode(BUTTON_SELECT_8, INPUT);
-  pinMode(13, INPUT);
+  readFromEEPROM();
   waitForSerialComm();
   if(state == STATE_SERIAL_COMM)
   {
     printMessage("SERIAL ACTIVE", "WAITING FOR START");
     return;
   }
-  //Attach interrupts for user input buttons and limit switches
+  //Attach interrupts for user input buttons
   attachInterrupt(digitalPinToInterrupt(BUTTON_INTERRUPT), buttonISR, RISING);
-  attachInterrupt(digitalPinToInterrupt(SWITCH_INTERRUPT), switchISR, RISING);
-  readFromEEPROM();
   moveArmToHome();
   rotateToPosZero();
   readAllFillLevels();
@@ -130,6 +131,7 @@ void setState(int newState) {
 void checkStateChange() {
   if(stateChanged)
   {
+    stateChanged = false;
     if(state == STATE_FILL_INFO)
     {
       setTimestamp();
@@ -148,7 +150,7 @@ void checkStateChange() {
       }
       else
       {
-        printMessage("", "");
+        printMessage("Zutaten", "unzureichend!");
         delay(1500);
       }
     }
@@ -175,6 +177,7 @@ void checkStateChange() {
     {
       printMessageMultiArg("Auswahl: ", recipeNames[selectedRecipe], "Fertig! Prost!", "");
       readFillLevelsPostMixing(selectedRecipe);
+      setState(STATE_MAIN_MENU);
     }
     else if(state == STATE_READ_FILL_LEVEL)
     {
@@ -182,21 +185,58 @@ void checkStateChange() {
       readAllFillLevels();
       setState(STATE_MAIN_MENU);
     }
-    stateChanged = false;
+    else if(state == STATE_DRAINING)
+    {
+      printDrainInfo();
+    }
   }
 }
 
 //Called when a button press by the user triggers the hardware interrupt
 void buttonISR() {
-  if(state == STATE_FILL_INFO)
+  if(state == STATE_FILL_INFO || state == STATE_DRAINING)
   {
-    if(digitalRead(BUTTON_SELECT_1) == HIGH)
+    if(state == STATE_FILL_INFO)
     {
-      setState(STATE_READ_FILL_LEVEL);
+      if(digitalRead(BUTTON_SELECT_1) == HIGH)
+      {
+        setState(STATE_READ_FILL_LEVEL);
+      }
+      else if(digitalRead(BUTTON_START_OR_FILL_INFO) == HIGH)
+      {
+        setState(STATE_MAIN_MENU);
+      }
     }
-    else if(digitalRead(BUTTON_START_OR_FILL_INFO) == HIGH)
+
+    if(digitalRead(BUTTON_SELECT_3) == HIGH)
     {
-      setState(STATE_MAIN_MENU);
+      setState(STATE_DRAINING);
+      switchValveToDrain(0);
+    }
+    else if(digitalRead(BUTTON_SELECT_4) == HIGH)
+    {
+      setState(STATE_DRAINING);
+      switchValveToDrain(1);
+    }
+    else if(digitalRead(BUTTON_SELECT_5) == HIGH)
+    {
+      setState(STATE_DRAINING);
+      switchValveToDrain(2);
+    }
+    else if(digitalRead(BUTTON_SELECT_6) == HIGH)
+    {
+      setState(STATE_DRAINING);
+      switchValveToDrain(3);
+    }
+    else if(digitalRead(BUTTON_SELECT_7) == HIGH)
+    {
+      setState(STATE_DRAINING);
+      switchValveToDrain(4);
+    }
+    else if(digitalRead(BUTTON_SELECT_8) == HIGH)
+    {
+      setState(STATE_DRAINING);
+      switchValveToDrain(5);
     }
   }
   else if(state == STATE_MAIN_MENU)
