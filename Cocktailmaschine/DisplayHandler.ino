@@ -67,6 +67,7 @@ const byte ae[8] = {
   B01111,
 };
 
+//LCD object
 LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
 //Initializes the display, clears it and creates the custom characters
@@ -233,6 +234,7 @@ void printError(int code) {
 
 //Prints the two lines of text passed to it to the display
 void printMessage(const char* lineOne, const char* lineTwo) {
+  lcd.clear();
   if(strlen(lineOne) > 18 || strlen(lineTwo) > 18)
   {
     printError(ERROR_STRING_TOO_LONG);

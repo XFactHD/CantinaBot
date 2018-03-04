@@ -17,6 +17,7 @@ package cantcon;
 
 import javafx.scene.control.TextField;
 
+//Custom implementation of the TextField with a limited text length
 public class LimitedTextField extends TextField
 {
     private final int limit;

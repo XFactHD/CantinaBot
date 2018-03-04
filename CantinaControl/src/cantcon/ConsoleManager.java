@@ -11,8 +11,10 @@ import javafx.stage.WindowEvent;
 
 public class ConsoleManager
 {
+    //The text are containing the displayed lines
     private static TextArea console = null;
 
+    //Opens and configures the console in a seperate window
     public static void openConsole()
     {
         GridPane grid = new GridPane();
@@ -47,12 +49,14 @@ public class ConsoleManager
         stage.toFront();
     }
 
+    //Handles closing of the console
     public static void closeConsole()
     {
         console = null;
         DisplayManager.onConsoleClosed();
     }
 
+    //Adds a new line to the console
     public static void printToConsole(String line)
     {
         if (console != null)

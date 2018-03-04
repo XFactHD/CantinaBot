@@ -1,4 +1,4 @@
-const int GLASS_SENSOR = A0;
+const int GLASS_SENSOR = A0; //Glass sensor pin
 
 //Initializes the GlassChecker
 void initGlassChecker() {

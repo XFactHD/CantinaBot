@@ -15,6 +15,7 @@
 
 package cantcon;
 
+//Enumeration of the different states of the serial connection
 public enum EnumConnStatus
 {
     DISCONNECTED ("Disconnected    ", "#FF0000"),
@@ -22,20 +23,22 @@ public enum EnumConnStatus
     CONNECTED    ("Connected       ", "#00FF00"),
     DISCONNECTING("Disconnecting...", "#FF8800");
 
-    private String name;
+    private String text;
     private String color;
 
-    EnumConnStatus(String name, String color)
+    EnumConnStatus(String text, String color)
     {
-        this.name = name;
+        this.text = text;
         this.color = color;
     }
 
-    public String getName()
+    //Returns the text to be displayed for a certain state
+    public String getText()
     {
-        return name;
+        return text;
     }
 
+    //Returns the text color for a certain state
     public String getColor()
     {
         return color;

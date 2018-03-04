@@ -1,5 +1,5 @@
-const int TRIGGER_PINS[] { 22, 24, 26, 28, 30, 32 };
-const int ECHO_PINS[] { 23, 25, 27, 29, 31, 33 };
+const int TRIGGER_PINS[] { 22, 24, 26, 28, 30, 32 }; //Trigger pins of the ultrasonic distance sensors
+const int ECHO_PINS[] { 23, 25, 27, 29, 31, 33 }; //Echo pins of the ultrasonic distance sensors
 
 const float CM_PER_MICROSEC = .03434; //Distance sound travels in air per microsecond
 

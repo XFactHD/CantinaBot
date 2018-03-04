@@ -1,4 +1,4 @@
-const byte EEPROM_CHECK_SUM = 100;
+const byte EEPROM_CHECK_SUM = 100; //"Checksum" used to make sure we do not read any garbage from an EEPROM we never wrote to
 
 const int ADDRESS_CHECK_SUM        = 0; //EEPROM address of the "checksum", needed to make sure we do not read any garbage from an EEPROM we never wrote to
 const int ADDRESS_RECIPE_NAMES     = ADDRESS_CHECK_SUM    + sizeof(byte); //EEPROM address of the recipe names

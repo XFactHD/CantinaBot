@@ -4,7 +4,7 @@
 
 #define DEBUG
 
-//PINS
+//BUTTON PINS
 const int BUTTON_INTERRUPT = 2;
 const int BUTTON_START_OR_FILL_INFO = 5;
 const int BUTTON_SELECT_1 = 6;
@@ -62,11 +62,11 @@ char ingredientNames[6][6] { //Names of the ingredients, max string length is 5 
   "Sirup"
 };
 
-int fillLevels[6] { 0, 0, 0, 0, 0, 0 };
-volatile int lastState = 0;
-volatile int state = 0;
-volatile boolean stateChanged = false;
-volatile int selectedRecipe = -1;
+int fillLevels[6] { 0, 0, 0, 0, 0, 0 }; //Fill levels of the six containers
+volatile int lastState = 0; //Last state of the state machine
+volatile int state = 0; //Current state of the state machine
+volatile boolean stateChanged = false; //Indicates if the state of the state machine changed
+volatile int selectedRecipe = -1; //The recipe currently selected and being worked on
 unsigned long timestamp = 0; //Used by certain states for a timeout
 
 void setup() {

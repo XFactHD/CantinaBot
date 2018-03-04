@@ -39,19 +39,20 @@ import java.util.Optional;
 
 public class DisplayManager
 {
-    private static GridPane recipesPane;
-    private static GridPane ingredientsPane;
+    private static GridPane recipesPane; //GridPane containing all screen elements for the recipes
+    private static GridPane ingredientsPane;//GridPane containing all screen elements for the ingredients
     private static Button selectButton;
     private static Button connectButton;
-    private static Label stateLabel;
+    private static Label stateLabel; //Label displaying the current connection state
     private static Button consoleButton;
-    private static ArrayList<Pair<TextField, ArrayList<Spinner<Integer>>>> recipeList = new ArrayList<>();
+    private static ArrayList<Pair<TextField, ArrayList<Spinner<Integer>>>> recipeList = new ArrayList<>(); //List of elements containing the recipe data
     private static Button loadRecipesButton;
     private static Button sendRecipesButton;
-    private static ArrayList<TextField> ingredientList = new ArrayList<>();
+    private static ArrayList<TextField> ingredientList = new ArrayList<>(); //List of text fields containing the ingredient names
     private static Button loadIngredientsButton;
     private static Button sendIngredientsButton;
 
+    //Opens a dialog to select the serial port
     public static String openPortDialog(boolean erroredBefore)
     {
         Dialog<String> dialog = new Dialog<>();
@@ -129,6 +130,7 @@ public class DisplayManager
         return result.orElse(null);
     }
 
+    //Initializes all screen elements
     public static void addScreenElements(Stage primaryStage, GridPane root)
     {
         addMainElements(primaryStage, root);
@@ -136,6 +138,7 @@ public class DisplayManager
         addRecipeElements();
     }
 
+    //Initializes screen elements for the frames and the status bar
     private static void addMainElements(Stage primaryStage, GridPane root)
     {
         Line lineHorOne = new Line(0, 0, primaryStage.getWidth(), 0);
@@ -237,7 +240,7 @@ public class DisplayManager
         Label desc = new Label(" Status:");
         status.add(desc, 2, 0);
 
-        Label state = new Label(EnumConnStatus.DISCONNECTED.getName());
+        Label state = new Label(EnumConnStatus.DISCONNECTED.getText());
         state.setTextFill(Color.web("#FF0000"));
         status.add(state, 3, 0);
         stateLabel = state;
@@ -260,6 +263,7 @@ public class DisplayManager
         connect.setPrefWidth(118);
     }
 
+    //Initializes screen elements for the ingredient settings
     private static void addIngredientElements()
     {
         int yIndex = 0;
@@ -318,6 +322,7 @@ public class DisplayManager
         ingredientsPane.add(buttonPane, 0, yIndex);
     }
 
+    //Initializes screen elements for the recipe settings
     private static void addRecipeElements()
     {
         for (int i = 0; i < 8; i++)
@@ -401,6 +406,7 @@ public class DisplayManager
         recipesPane.add(buttonPane, 0, 8);
     }
 
+    //Updates certain screen elements according to the current connection status
     public static void setConnectionStatus(EnumConnStatus status)
     {
         if (status == EnumConnStatus.CONNECTING || status == EnumConnStatus.DISCONNECTING)
@@ -433,15 +439,17 @@ public class DisplayManager
             connectButton.setText("    Connect    ");
             selectButton.setDisable(false);
         }
-        stateLabel.setText(status.getName());
+        stateLabel.setText(status.getText());
         stateLabel.setTextFill(Color.web(status.getColor()));
     }
 
+    //Enables the connection button
     public static void activateConnect()
     {
         connectButton.setDisable(false);
     }
 
+    //Asks the arduino for the recipes
     private static void loadRecipes()
     {
         loadRecipesButton.setDisable(true);
@@ -452,6 +460,7 @@ public class DisplayManager
         Main.INSTANCE.setWaitingForData();
     }
 
+    //Deserializes the received recipe data
     public static void receiveRecipes(String input)
     {
         input = input.replace("RECIPES;", "");
@@ -476,6 +485,7 @@ public class DisplayManager
         sendIngredientsButton.setDisable(false);
     }
 
+    //Sends the new recipes to the arduino
     private static void sendRecipes()
     {
         int[] ingredientCounts = new int[] {0, 0, 0, 0, 0, 0, 0, 0};
@@ -543,6 +553,7 @@ public class DisplayManager
         Main.INSTANCE.setWaitingForResponse();
     }
 
+    //Asks the arduino for the ingredients
     private static void loadIngredients()
     {
         loadRecipesButton.setDisable(true);
@@ -553,6 +564,7 @@ public class DisplayManager
         Main.INSTANCE.setWaitingForData();
     }
 
+    //Deserializes the received ingredient data
     public static void receiveIngredients(String input)
     {
         input = input.replace("INGREDIENTS;", "");
@@ -568,6 +580,7 @@ public class DisplayManager
         sendIngredientsButton.setDisable(false);
     }
 
+    //Sends the new ingredients to the arduino
     private static void sendIngredients()
     {
         for (TextField field : ingredientList)
@@ -600,6 +613,7 @@ public class DisplayManager
         Main.INSTANCE.setWaitingForResponse();
     }
 
+    //Reactivates certain screen elements after receiving the confirmation from the arduino
     public static void confirmSent()
     {
         loadRecipesButton.setDisable(false);
@@ -608,6 +622,7 @@ public class DisplayManager
         sendIngredientsButton.setDisable(false);
     }
 
+    //Reenables the open console button when the console is closed
     public static void onConsoleClosed()
     {
         consoleButton.setDisable(false);

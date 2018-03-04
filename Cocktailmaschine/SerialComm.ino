@@ -1,7 +1,7 @@
-String message = "";
-String output = "";
-boolean serialRunning = false;
-boolean needsReboot = false;
+String message = ""; //Data received through the serial bus
+String output = ""; //Data to be sent over the serial bus
+boolean serialRunning = false; //Indicates if the arduino is currently communicating with the java app
+boolean needsReboot = false; //Indicates if the arduino needs to be reset after communicating with the arduino
 
 //Waits for 2 seconds for a computer to attempt a connection with this device
 void waitForSerialComm() {

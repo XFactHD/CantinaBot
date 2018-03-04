@@ -5,7 +5,9 @@ const int VALVE_INGREDIENT_3 = 36;
 const int VALVE_INGREDIENT_4 = 37;
 const int VALVE_INGREDIENT_5 = 38;
 const int VALVE_INGREDIENT_6 = 39;
+
 const int MOTOR_STIR = 4;
+
 const int STEPPER_DISC_DIR = 40;
 const int STEPPER_DISC_STEP = 41;
 const int STEPPER_DISC_ENABLE = 42;
@@ -22,10 +24,12 @@ const int SWITCH_ARM_HOR_OUT = A4;
 const int SWITCH_ARM_VERT_TOP = A5;
 const int SWITCH_ARM_VERT_BOTTOM = A6;
 
+//Stepper objects
 A4988 stepperDisc(200, STEPPER_DISC_DIR, STEPPER_DISC_STEP, STEPPER_DISC_ENABLE);
 A4988 stepperArmHor(200, STEPPER_ARM_HOR_DIR, STEPPER_ARM_HOR_STEP, STEPPER_ARM_HOR_ENABLE);
 A4988 stepperArmVert(200, STEPPER_ARM_VERT_DIR, STEPPER_ARM_VERT_STEP, STEPPER_ARM_VERT_ENABLE);
 
+//Valve pins as array
 const int VALVES[] { VALVE_INGREDIENT_1, VALVE_INGREDIENT_2, VALVE_INGREDIENT_3, VALVE_INGREDIENT_4, VALVE_INGREDIENT_5, VALVE_INGREDIENT_6 };
 
 const int POS_STIR_ARM = 7; //Position of the stir arm above the table (pos 0 = start, pos 1-6 = ingredients, pos 7 = stir arm)
@@ -36,7 +40,7 @@ const float ML_PER_MS_MAX_BIG = .3; //Flow speed through a big valve in millilit
 const int STIR_TIME_MS = 6000; //Time to stir the cocktail
 const int STIR_SPEED = 40; //PWM duty cycle for the stir motor
 
-int openValve = -1; //Used to drain the system in a controlled manner
+int openValve = -1; //Currently open valve, used to drain the system in a controlled manner
 
 //Configures all pins, initializes the stepper drivers and disables them to conserve energy (and my sanity :D)
 void initProcessHandler() {
@@ -191,8 +195,9 @@ void switchValveToDrain(int index) {
 
 //Shows the currently open valve on the display
 void printDrainInfo() {
-  char *val = "";
+  char val[2] = "";
   itoa(openValve + 1, val, 10);
+  val[1] = '\0';
   printMessageMultiArg("Draining!", " ", "Valve: ", val);
 }
 

@@ -26,14 +26,17 @@ public class Main extends Application implements SerialPortEventListener
 
     private Stage primaryStage;
 
+    //Serial port data
     private String portName = null;
     private SerialPort port;
 
+    //Serial port access and details
     private BufferedReader input;
     private OutputStream output;
     private static final int TIME_OUT = 2000;
     private static final int DATA_RATE = 9600;
 
+    //Serial message markers
     private static final String MESSAGE_START_TRANSMISSION = "START";
     private static final String MESSAGE_END_TRANSMISSION = "TERMINATE";
     private static final String MESSAGE_ACKNOWLEDGE_TRANSMISSION = "ACK";
@@ -43,21 +46,26 @@ public class Main extends Application implements SerialPortEventListener
     private static final String MESSAGE_INGREDIENT_DATA_HEADER = "INGREDIENTS;";
     private static final String MESSAGE_DATA_END_MARKER = ";END";
 
+    //App state
     private boolean running = true;
     private boolean connected = false;
     private EnumConnStatus status = EnumConnStatus.DISCONNECTED;
 
+    //Thread used for connection timeout
     private TimerThread timer = new TimerThread();
 
+    //Serial status indicators
     private boolean waitingForData = false;
     private boolean waitingForResponse = false;
 
+    //Main method of the app
     public static void main(String[] args)
     {
         extractDLLs();
         launch(args);
     }
 
+    //Starts the app and initializes the screen elements and other variables
     @Override
     public void start(Stage primaryStage) throws Exception
     {
@@ -67,6 +75,7 @@ public class Main extends Application implements SerialPortEventListener
         primaryStage.setTitle("CantinaControl");
         primaryStage.setScene(new Scene(root, 1800, 960));
         primaryStage.setResizable(false);
+        //Set what happens when the app is closed
         primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>()
         {
             @Override
@@ -80,9 +89,10 @@ public class Main extends Application implements SerialPortEventListener
 
         DisplayManager.addScreenElements(primaryStage, root);
 
-        timer.start();
+        timer.start(); //Start the timeout timer thread
     }
 
+    //Tries to initialize the serial port with the given name, returns if successful
     private boolean initializeSerialPort(String portName)
     {
         if (portName.equals("")) { return false; }
@@ -126,6 +136,7 @@ public class Main extends Application implements SerialPortEventListener
         return true;
     }
 
+    //Called when the app is closed, cleans up the serial port
     public synchronized void close()
     {
         if (port != null)
@@ -141,6 +152,7 @@ public class Main extends Application implements SerialPortEventListener
         primaryStage.close();
     }
 
+    //Called by the select port button, opens the corresponding dialog and tries to initialize the port it returns
     public void selectPort()
     {
         boolean errored = false;
@@ -158,6 +170,7 @@ public class Main extends Application implements SerialPortEventListener
         this.portName = portName;
     }
 
+    //Starts the serial communication by sending the START message
     public void startSerialComm()
     {
         if (port == null && portName != null)
@@ -174,6 +187,7 @@ public class Main extends Application implements SerialPortEventListener
         }
     }
 
+    //Ends the serial communication by sending the TERMINATE message
     public void stopSerialComm()
     {
         status = EnumConnStatus.DISCONNECTING;
@@ -181,6 +195,7 @@ public class Main extends Application implements SerialPortEventListener
         sendSerialMessage(MESSAGE_END_TRANSMISSION);
     }
 
+    //Called by the rxtx library when serial data is received
     @Override
     public synchronized void serialEvent(SerialPortEvent event)
     {
@@ -263,6 +278,7 @@ public class Main extends Application implements SerialPortEventListener
         }
     }
 
+    //Sends a serial message to the arduino
     public boolean sendSerialMessage(String message)
     {
         message += "\n";
@@ -294,18 +310,21 @@ public class Main extends Application implements SerialPortEventListener
         this.waitingForResponse = true;
     }
 
+    //Print a debug message to the internal console and to System.out
     public void printInfo(String line)
     {
         System.out.println(line);
         ConsoleManager.printToConsole("[INFO] " + line);
     }
 
+    //Print an error message to the internal console and to System.error
     public void printError(String line)
     {
         System.err.println(line);
         ConsoleManager.printToConsole("[ERROR] " + line);
     }
 
+    //Print a stacktrace to the internal console and to the system
     public void printStacktrace(Exception e)
     {
         e.printStackTrace();
@@ -320,12 +339,14 @@ public class Main extends Application implements SerialPortEventListener
         ConsoleManager.printToConsole(builder.toString());
     }
 
+    //Extracts the DLLs from the jar if necessary
     private static void extractDLLs()
     {
         copyFile(Main.class.getResourceAsStream("/rxtxParallel.dll"), FileSystems.getDefault().getPath("rxtxParallel.dll").toString());
         copyFile(Main.class.getResourceAsStream("/rxtxSerial.dll"), FileSystems.getDefault().getPath("rxtxSerial.dll").toString());
     }
 
+    //Handles the file copying of the DLLs
     public static void copyFile(InputStream source, String destination)
     {
         if (source == null) { return; } //Either we are in a dev environment or the desired files are not in the jar
@@ -339,6 +360,7 @@ public class Main extends Application implements SerialPortEventListener
         }
     }
 
+    //Thread used to handle connection timeout
     private static class TimerThread extends Thread
     {
         private long timestamp = -1;
