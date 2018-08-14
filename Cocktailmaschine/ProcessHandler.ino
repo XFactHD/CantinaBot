@@ -33,10 +33,7 @@ A4988 stepperArmVert(200, STEPPER_ARM_VERT_DIR, STEPPER_ARM_VERT_STEP, STEPPER_A
 const int VALVES[] { VALVE_INGREDIENT_1, VALVE_INGREDIENT_2, VALVE_INGREDIENT_3, VALVE_INGREDIENT_4, VALVE_INGREDIENT_5, VALVE_INGREDIENT_6 };
 
 const int POS_STIR_ARM = 7; //Position of the stir arm above the table (pos 0 = start, pos 1-6 = ingredients, pos 7 = stir arm)
-const float ML_PER_MS_MIN_SMALL = .02; //Flow speed through s small valve in milliliters per millisecond when the bottle is almost empty (currently estimated)
-const float ML_PER_MS_MAX_SMALL = .08; //Flow speed through a small valve in milliliters per millisecond when the bottle is full (currently estimated)
-const float ML_PER_MS_MIN_BIG = .06; //Flow speed through a big valve in milliliters per millisecond when the bottle is almost empty (currently estimated)
-const float ML_PER_MS_MAX_BIG = .3; //Flow speed through a big valve in milliliters per millisecond when the bottle is full (currently estimated)
+const float ML_PER_MS = 0.01; //Flow speed in milliliters per millisecond
 const int STIR_TIME_MS = 6000; //Time to stir the cocktail
 const int STIR_SPEED = 40; //PWM duty cycle for the stir motor
 
@@ -154,18 +151,9 @@ void rotate(int positions) {
 
 //Pours the ingredient at the defined amount into the glass
 void pourIngredient(int ingredient, int amount) {
-  float mlPerMs = 0;
-  if(ingredient == 1 || ingredient == 5) //Ingredient 1 and 5 are using a valve with a bigger nozzle
-  {
-    mlPerMs = mapFloat(fillLevels[ingredient], 10, 100, ML_PER_MS_MIN_BIG, ML_PER_MS_MAX_BIG);
-  }
-  else
-  {
-    mlPerMs = mapFloat(fillLevels[ingredient], 10, 100, ML_PER_MS_MIN_SMALL, ML_PER_MS_MAX_SMALL);
-  }
-  
+  int time = float(amount) / ML_PER_MS;
+  Serial.println(time);
   digitalWrite(VALVES[ingredient], HIGH);
-  int time = float(amount) / mlPerMs;
   delay(time);
   digitalWrite(VALVES[ingredient], LOW);
   delay(500);

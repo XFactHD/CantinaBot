@@ -2,7 +2,7 @@
 #include <LiquidCrystal.h>
 #include <A4988.h>
 
-#define DEBUG
+//#define DEBUG
 
 //BUTTON PINS
 const int BUTTON_INTERRUPT = 2;
@@ -44,9 +44,9 @@ int recipeIngredients[8][6] { //Ingredients of the cocktails
   {3, -1, -1, -1, -1, -1},
   {2, -1, -1, -1, -1, -1} };
 int recipeIngredientAmounts[8][6] { //Amount of each ingredient of a cocktail
-  { 50, 180, -1, -1, -1, -1},
-  {180,  50, -1, -1, -1, -1},
-  {180,  50, -1, -1, -1, -1},
+  { 45, 135, -1, -1, -1, -1},
+  { -1, 135, 45, -1, -1, -1},
+  { -1, 135, -1, 45, -1, -1},
   { 50,  25, 25, -1, -1, -1},
   { 50,  25, 25, -1, -1, -1},
   { 50,  25, 25, -1, -1, -1},
